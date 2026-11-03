@@ -1,46 +1,31 @@
-import { useState } from 'react'
-import { AuthForm } from './components/AuthForm'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { Header } from './components/Header'
+import { Landing } from './components/Landing'
+import { Studio } from './components/studio/Studio'
+import { useSession } from './hooks/useSession'
 import './App.css'
 
 function App() {
-  const [authMode, setAuthMode] = useState<'signup' | 'signin' | null>(null)
-
-  if (authMode) {
-    return (
-      <main className="landing">
-        <AuthForm key={authMode} mode={authMode} onClose={() => setAuthMode(null)} />
-      </main>
-    )
-  }
+  const { user, loading, error } = useSession()
 
   return (
-    <main className="landing">
-      <header className="landing-header">
-        <a href="/" className="logo">
-          sound garden
-        </a>
-      </header>
-
-      <section className="hero">
-        <div className="hero-copy">
-          <h1>Your music, in motion.</h1>
-          <p>A personal music playground you can shape with your hands.</p>
-
-          <div className="hero-actions">
-            <button type="button" onClick={() => setAuthMode('signup')}>
-              Create your garden
-            </button>
-            <button type="button" onClick={() => setAuthMode('signin')}>
-              Sign in
-            </button>
-          </div>
-        </div>
-
-        <div className="hero-visual" aria-hidden="true">
-          Waveform preview
-        </div>
-      </section>
-    </main>
+    <>
+      <Header user={user} />
+      {loading ? (
+        <main className="session-status" role="status">Loading your account…</main>
+      ) : error ? (
+        <main className="session-status" role="alert">
+          <p>{error}</p>
+          <button type="button" onClick={() => window.location.reload()}>Try again</button>
+        </main>
+      ) : (
+        <Routes>
+          <Route path="/" element={user ? <Navigate to="/studio" replace /> : <Landing />} />
+          <Route path="/studio" element={user ? <Studio /> : <Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      )}
+    </>
   )
 }
 

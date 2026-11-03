@@ -1,0 +1,33 @@
+.studio-layout { display:grid; grid-template-columns:1fr 1fr; min-height:calc(100svh - 80px); }
+.track-panel { min-width:0; padding:36px; display:flex; flex-direction:column; gap:24px; border-right:1px solid #e8e0e7; }
+.library-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; }
+.library-toolbar h1 { margin:0; font-size:28px; font-weight:500; letter-spacing:-1px; }
+.library-toolbar p { margin:8px 0 0; color:#756b76; font-size:14px; }
+.upload-button { padding:12px 18px; border:0; border-radius:12px; background:#b9e5c5; color:#294b36; }
+.library-search { width:100%; padding:14px 16px; border:1px solid #ded5e2; border-radius:12px; background:white; font:inherit; }
+.upload-zone { min-height:300px; flex:1; padding:40px 24px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; border:1px dashed #ccb5dc; border-radius:24px; }
+.empty-icon { color:#b793ce; font-size:52px; }
+.upload-zone h2, .waveform-view h2 { margin:16px 0 8px; font-size:22px; font-weight:500; letter-spacing:-.5px; }
+.upload-zone p, .waveform-view p { margin:0 0 24px; color:#756b76; font-size:14px; line-height:1.7; }
+.upload-zone small { margin-top:16px; color:#756b76; }
+.library-player { display:flex; align-items:center; gap:16px; padding:16px; border-radius:18px; background:#f3edf5; color:#756b76; font-size:12px; }
+.library-player button { width:36px; height:36px; flex-shrink:0; border:0; border-radius:50%; background:#e7d9ee; color:#705780; }
+.player-progress { flex:1; height:4px; border-radius:4px; background:#dfd3e5; }
+.waveform-panel { min-width:0; min-height:560px; padding:36px; display:flex; flex-direction:column; justify-content:center; background:radial-gradient(ellipse at center,#eee0f555,transparent 70%); }
+.waveform-view { text-align:center; }
+.waveform-placeholder { height:220px; display:grid; place-items:center; }
+.waveform-baseline { width:90%; height:1px; background:#b9e5c5; box-shadow:0 0 24px #b9e5c566; }
+.gesture-toolbar { margin-top:48px; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:20px; color:#756b76; font-size:13px; }
+.gesture-toolbar button { padding:12px 18px; border:1px solid #ded5e2; border-radius:12px; background:transparent; color:#756b76; }
+.studio-layout button:disabled { cursor:not-allowed; opacity:.65; }
+@media(max-width:800px) { .studio-layout { grid-template-columns:1fr; } .track-panel { padding:24px; border-right:0; border-bottom:1px solid #e8e0e7; } .waveform-panel { padding:24px; min-height:450px; } }
+
+/* Keep the workspace quiet; the future live signal is the focal point. */
+.studio-layout { max-width: 1600px; margin: auto; animation: enter 350ms var(--ease) both; }
+.track-panel { padding: 36px clamp(24px,3vw,48px); }
+.library-toolbar h1 { font-weight: 450; }
+.upload-zone { background: linear-gradient(145deg,#ffffff90,#f5eef650); border-color: #d9c6e4; }
+.waveform-placeholder { position: relative; perspective: 600px; }
+.waveform-placeholder::before { content: ''; position: absolute; width: 85%; height: 120px; bottom: 38px; transform: rotateX(65deg); background-image: linear-gradient(#cfc0dc35 1px,transparent 1px),linear-gradient(90deg,#cfc0dc35 1px,transparent 1px); background-size: 36px 28px; mask-image: radial-gradient(ellipse,#000,transparent 75%); }
+.waveform-baseline { position: relative; background: #a6d9ba; }
+.waveform-view h2 { font-weight: 450; }

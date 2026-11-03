@@ -1,75 +1,48 @@
-# React + TypeScript + Vite
+# Sound Garden
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A personal music library with planned real-time 3D waveforms and hand-gesture audio controls.
 
-Currently, two official plugins are available:
+## Local development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```sh
+npm install
+cp .env.example .env.local
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Fill in `.env.local` with your Supabase project URL and browser-safe publishable key. Never use a secret or service-role key in the frontend.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```sh
+npm run dev
 ```
+
+Configure Supabase Auth's site URL and allowed email confirmation redirects for your local and deployed URLs.
+
+## Current behavior
+
+- `/`: landing page with email/password signup and sign-in.
+- `/studio`: authenticated studio shell with a track-library empty state.
+- Shared header displays the signed-in email and supports signing out.
+- Session restoration finishes before protected routes are resolved.
+- Uploads, playback, waveform rendering, and hand controls are not implemented yet; their controls are disabled.
+
+## Organization
+
+- `src/hooks/useSession.ts`: session restoration and authentication events.
+- `src/components/Header.tsx`: shared navigation and account controls.
+- `src/components/Landing.tsx`: landing page and authentication form selection.
+- `src/components/AuthForm.tsx`: signup/sign-in requests.
+- `src/components/studio/`: studio layout and focused feature components.
+- `src/lib/supabase.ts`: shared Supabase client.
+
+## Checks
+
+```sh
+npm run lint
+npm run build
+```
+
+## Deployment and authorization
+
+Configure your static host to rewrite application routes such as `/studio` to `index.html` so direct links and refreshes work. Serve over HTTPS for future camera access.
+
+Client-side route guards do not secure data. Before implementing the music library, configure database row-level security and private storage policies based on the authenticated user's ID.

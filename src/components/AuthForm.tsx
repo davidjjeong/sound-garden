@@ -5,13 +5,15 @@ import { supabase } from '../lib/supabase'
 type AuthFormProps = {
   mode: 'signup' | 'signin'
   onClose: () => void
+  onSwitch: () => void
 }
 
-export function AuthForm({ mode, onClose }: AuthFormProps) {
+export function AuthForm({ mode, onClose, onSwitch }: AuthFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   const isSignup = mode === 'signup'
 
@@ -43,9 +45,11 @@ export function AuthForm({ mode, onClose }: AuthFormProps) {
 
   return (
     <section className="auth-panel" aria-labelledby="auth-title">
-      <h2 id="auth-title">
+      <span className="auth-eyebrow">sound garden</span>
+      <h1 id="auth-title">
         {isSignup ? 'Create your account' : 'Welcome back'}
-      </h2>
+      </h1>
+      <p className="auth-description">{isSignup ? 'A home for your music. A new way to play.' : 'Your music is right where you left it.'}</p>
 
       <form onSubmit={handleSubmit}>
         <label htmlFor="email">Email</label>
@@ -60,9 +64,10 @@ export function AuthForm({ mode, onClose }: AuthFormProps) {
         />
 
         <label htmlFor="password">Password</label>
+        <div className="password-field">
         <input
           id="password"
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           autoComplete={isSignup ? 'new-password' : 'current-password'}
           minLength={6}
           value={password}
@@ -70,6 +75,11 @@ export function AuthForm({ mode, onClose }: AuthFormProps) {
           required
           disabled={loading}
         />
+
+        <button type="button" className="password-toggle" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)} disabled={loading}>
+          {showPassword ? 'Hide' : 'Show'}
+        </button>
+        </div>
 
         <button type="submit" disabled={loading}>
           {loading
@@ -82,6 +92,12 @@ export function AuthForm({ mode, onClose }: AuthFormProps) {
         <p role="status">{message}</p>
       </form>
 
+      <div className="auth-switch">
+        {isSignup ? 'Already have an account?' : 'New to sound garden?'}{' '}
+        <button type="button" onClick={onSwitch} disabled={loading}>
+          {isSignup ? 'Sign in' : 'Create an account'}
+        </button>
+      </div>
       <button type="button" onClick={onClose} disabled={loading}>
         Back
       </button>
