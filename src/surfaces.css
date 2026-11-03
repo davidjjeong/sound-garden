@@ -25,10 +25,11 @@ button:disabled { cursor: not-allowed; }
 .hero-actions button:first-child,.auth-panel button[type='submit'] {
   border: 1px solid #303a34; border-radius: 12px; background: #303a34; color: #fff; font-weight: 600; box-shadow: 0 2px 5px #273b2d12;
 }
-.upload-button { border: 1px solid #cde4d5; border-radius: 12px; background: #e1f0e7; color: #365842; font-weight: 600; }
+.upload-button { border: 1px solid #303a34; border-radius: 12px; background: #303a34; color: #fff; font-weight: 600; }
 .hero-actions button:hover:not(:disabled),.account button:hover:not(:disabled),.session-status button:hover:not(:disabled),.gesture-toolbar button:hover:not(:disabled),.library-player button:hover:not(:disabled) { background: #f0edf4; border-color: #d6cedd; box-shadow: 0 3px 8px #29213208; }
 .hero-actions button:first-child:hover:not(:disabled),.auth-panel button[type='submit']:hover:not(:disabled) { background: #425649; border-color: #425649; box-shadow: 0 4px 12px #273b2d20; }
-.upload-button:hover:not(:disabled) { background: #cde7d6; border-color: #b4d7c0; box-shadow: 0 3px 8px #75a78912; }
+.upload-button:hover:not(:disabled) { background: #425649; border-color: #425649; box-shadow: 0 3px 8px #273b2d20; }
+.upload-button:active:not(:disabled) { background: #253029; border-color: #253029; }
 .wave-artwork { padding: 24px 12px; border: 1px solid #eeeaf1; border-radius: 24px; background: #ffffffb8; box-shadow: 0 5px 25px #6a527a04; transition: border-color 200ms,background-color 200ms,box-shadow 200ms; }
 .wave-artwork:hover { border-color: #cdbbd7; background: #fff; box-shadow: 0 8px 28px #6a527a0b; }
 .wave-artwork[aria-pressed='true'] { background: #f2edf7; border-color: #cdbbd7; }
@@ -90,10 +91,11 @@ button:disabled { cursor: not-allowed; }
 .player-actions { display: grid; grid-template-columns: repeat(5,40px); justify-content: center; align-items: center; gap: 16px; margin-top: 12px; }
 .player-actions button { display: grid; place-items: center; width: 40px; height: 40px; padding: 10px; background: transparent; border: 0; border-radius: 50%; color: #35343d; }
 .player-actions svg { display: block; width: 20px; height: 20px; flex-shrink: 0; }
-.player-actions .player-play { width: 48px; height: 48px; justify-self: center; padding: 13px; background: #1ed760; color: white; }
+.player-actions .player-play { width: 48px; height: 48px; justify-self: center; padding: 13px; background: #303a34; color: white; }
 .player-actions .player-play svg { width: 22px; height: 22px; }
 .player-actions button:hover:not(:disabled) { background: #edf6f0; }
-.player-actions .player-play:hover:not(:disabled) { background: #19c956; box-shadow: 0 4px 12px #1ed76026; }
+.player-actions .player-play:hover:not(:disabled) { background: #425649; box-shadow: 0 4px 12px #273b2d20; }
+.player-actions .player-play:active:not(:disabled) { background: #253029; }
 .player-actions button:disabled { opacity: .4; }
 .player-actions .player-play:disabled { opacity: .65; }
 .track-panel { gap: 20px; }

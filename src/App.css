@@ -55,8 +55,9 @@
 .password-field { position: relative; }
 .password-field input { padding-right: 66px; }
 .password-toggle { position: absolute; right: 8px; top: 7px; bottom: 7px; border: 0; border-radius: 7px; background: transparent; padding: 0 9px; color: var(--muted); font-size: 12px; }
-.auth-panel button[type='submit'] { margin-top: 14px; padding: 14px 20px; border: 1px solid var(--mint); border-radius: 11px; background: var(--mint); color: #294b36; font-size: 14px; font-weight: 550; }
-.auth-panel button[type='submit']:hover:not(:disabled) { background: #a9ddb9; }
+.auth-panel button[type='submit'] { margin-top: 14px; padding: 14px 20px; border: 1px solid #303a34; border-radius: 11px; background: #303a34; color: #fff; font-size: 14px; font-weight: 550; }
+.auth-panel button[type='submit']:hover:not(:disabled) { background: #425649; border-color: #425649; }
+.auth-panel button[type='submit']:active:not(:disabled) { background: #253029; border-color: #253029; }
 .auth-panel > button { display: block; margin: 18px auto 0; padding: 8px 12px; border: 0; background: transparent; color: var(--muted); font-size: 12px; }
 .auth-switch { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--line); text-align: center; color: var(--muted); font-size: 12px; line-height: 1.8; }
 .auth-switch button { padding: 2px 4px; border: 0; background: transparent; color: #41694e; font-size: inherit; text-decoration: underline; text-underline-offset: 3px; }
