@@ -31,3 +31,31 @@
 .waveform-placeholder::before { content: ''; position: absolute; width: 85%; height: 120px; bottom: 38px; transform: rotateX(65deg); background-image: linear-gradient(#cfc0dc35 1px,transparent 1px),linear-gradient(90deg,#cfc0dc35 1px,transparent 1px); background-size: 36px 28px; mask-image: radial-gradient(ellipse,#000,transparent 75%); }
 .waveform-baseline { position: relative; background: #a6d9ba; }
 .waveform-view h2 { font-weight: 450; }
+
+.track-list {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.track-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 4px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.track-row > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.track-size {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
