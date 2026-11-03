@@ -4,6 +4,7 @@ import { Landing } from './components/Landing'
 import { Studio } from './components/studio/Studio'
 import { useSession } from './hooks/useSession'
 import './App.css'
+import './surfaces.css'
 
 function App() {
   const { user, loading, error } = useSession()

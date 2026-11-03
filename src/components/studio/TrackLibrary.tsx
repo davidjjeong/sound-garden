@@ -104,7 +104,13 @@ export function TrackLibrary() {
         <p role="status">Loading your library…</p>
       ) : tracks.length === 0 ? (
         <div className="upload-zone">
-          <span className="empty-icon" aria-hidden="true">♫</span>
+          <span className="empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M13 23V9l13-3v14M13 13l13-3" />
+              <ellipse cx="9" cy="24" rx="4" ry="3" />
+              <ellipse cx="22" cy="21" rx="4" ry="3" />
+            </svg>
+          </span>
           <h2>Add your first track</h2>
           <p>Choose an MP3 or WAV file, up to 20 MB.</p>
 
