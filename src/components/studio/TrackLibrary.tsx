@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
-import { getTracks, uploadTrack } from '../../lib/tracks'
+import { getTracks } from '../../lib/tracks'
+import { useTrackUpload } from '../../hooks/useTrackUpload'
 
 type Track = Awaited<ReturnType<typeof getTracks>>[number]
 
@@ -8,8 +9,9 @@ export function TrackLibrary() {
   const inputRef = useRef<HTMLInputElement>(null)
   const [tracks, setTracks] = useState<Track[]>([])
   const [loading, setLoading] = useState(true)
-  const [uploading, setUploading] = useState(false)
-  const [error, setError] = useState('')
+  const [libraryError, setLibraryError] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
+  const { status, error: uploadError, completedTrack, canRetry, isUploading, startUpload, retryUpload, reset } = useTrackUpload()
   const [query, setQuery] = useState('')
 
   useEffect(() => {
@@ -17,11 +19,14 @@ export function TrackLibrary() {
 
     getTracks()
       .then((data) => {
-        if (active) setTracks(data)
+        if (active) {
+          setTracks(data)
+          setLibraryError('')
+        }
       })
       .catch((error: unknown) => {
         if (active) {
-          setError(
+          setLibraryError(
             error instanceof Error ? error.message : 'Could not load tracks.',
           )
         }
@@ -33,7 +38,7 @@ export function TrackLibrary() {
     return () => {
       active = false
     }
-  }, [])
+  }, [completedTrack, reloadKey])
 
   async function handleUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -41,20 +46,17 @@ export function TrackLibrary() {
 
     if (!file) return
 
-    setUploading(true)
-    setError('')
-
-    try {
-      const track = await uploadTrack(file)
-      setTracks((current) => [track, ...current])
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : 'Could not upload track.',
-      )
-    } finally {
-      setUploading(false)
-    }
+    await startUpload(file)
   }
+
+  const uploadMessage = {
+    idle: '',
+    reserving: 'Preparing your upload…',
+    uploading: 'Uploading your audio…',
+    verifying: 'Verifying your track…',
+    complete: 'Your track is ready.',
+    error: '',
+  }[status]
 
   const filteredTracks = tracks.filter((track) =>
     track.title.toLowerCase().includes(query.trim().toLowerCase()),
@@ -67,6 +69,7 @@ export function TrackLibrary() {
         type="file"
         accept=".mp3,.wav"
         onChange={handleUpload}
+        disabled={isUploading || loading}
         hidden
       />
 
@@ -82,9 +85,9 @@ export function TrackLibrary() {
           className="upload-button"
           type="button"
           onClick={() => inputRef.current?.click()}
-          disabled={uploading || loading}
+          disabled={isUploading || loading}
         >
-          {uploading ? 'Uploading…' : '+ Upload audio'}
+          {isUploading ? 'Working…' : '+ Upload audio'}
         </button>
       </div>
 
@@ -97,8 +100,28 @@ export function TrackLibrary() {
         onChange={(event) => setQuery(event.target.value)}
       />
 
-      {error && <p role="alert">{error}</p>}
-      {uploading && <p role="status">Uploading your track…</p>}
+      {libraryError && (
+        <div className="upload-feedback">
+          <p role="alert">{libraryError}</p>
+          <button type="button" onClick={() => setReloadKey((key) => key + 1)}>
+            Reload library
+          </button>
+        </div>
+      )}
+      {uploadError && (
+        <div className="upload-feedback">
+          <p role="alert">{uploadError}</p>
+          <div className="upload-feedback-actions">
+            {canRetry && (
+              <button type="button" onClick={() => void retryUpload()} disabled={isUploading}>
+                Retry upload
+              </button>
+            )}
+            <button type="button" onClick={reset} disabled={isUploading}>Dismiss</button>
+          </div>
+        </div>
+      )}
+      <p className="upload-status" role="status" aria-atomic="true">{uploadMessage}</p>
 
       {loading ? (
         <p role="status">Loading your library…</p>
@@ -112,15 +135,15 @@ export function TrackLibrary() {
             </svg>
           </span>
           <h2>Add your first track</h2>
-          <p>Choose an MP3 or WAV file, up to 20 MB.</p>
+          <p>Choose an MP3 or WAV file, up to 20 MiB.</p>
 
           <button
             className="upload-button"
             type="button"
             onClick={() => inputRef.current?.click()}
-            disabled={uploading}
+            disabled={isUploading || loading}
           >
-            {uploading ? 'Uploading…' : 'Choose files'}
+            {isUploading ? 'Working…' : 'Choose files'}
           </button>
         </div>
       ) : filteredTracks.length === 0 ? (

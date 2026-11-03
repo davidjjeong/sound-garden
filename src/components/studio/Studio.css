@@ -59,3 +59,11 @@
   color: var(--muted);
   font-size: 12px;
 }
+
+.upload-feedback { padding: 14px 16px; border: 1px solid #e3e7e4; border-radius: 12px; background: #fafbf9; }
+.upload-feedback p { margin: 0 0 10px; color: #654b4b; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.upload-feedback-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.upload-feedback button { padding: 8px 12px; border: 1px solid #dce3de; background: white; color: #303a34; font-size: 12px; }
+.upload-feedback button:hover:not(:disabled) { background: #edf3ef; border-color: #b7c9bd; }
+.upload-status { margin: 0; color: #597161; font-size: 13px; line-height: 1.5; }
+.upload-status:empty { display: none; }
