@@ -97,3 +97,109 @@
     min-height: 220px;
   }
 }
+
+.auth-panel {
+  width: min(440px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 40px;
+  border: 1px solid #e6dfe8;
+  border-radius: 28px;
+  background: #ffffffd9;
+  box-shadow: 0 24px 80px #6550740d;
+}
+
+.landing:has(.auth-panel) {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 32px 0;
+}
+
+.auth-panel h2 {
+  margin: 0 0 28px;
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -1px;
+}
+
+.auth-panel form {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-panel label {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.auth-panel input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #ded5e2;
+  border-radius: 12px;
+  background: #fcfafc;
+  color: #453f46;
+  font: inherit;
+  transition: border-color 150ms ease;
+}
+
+.auth-panel input:hover {
+  border-color: #b9a9c2;
+}
+
+.auth-panel input:focus-visible {
+  outline: 3px solid #b9e5c566;
+  outline-offset: 2px;
+  border-color: #629d80;
+}
+
+.auth-panel button[type='submit'] {
+  margin-top: 16px;
+  padding: 14px 20px;
+  border: 1px solid #b9e5c5;
+  border-radius: 12px;
+  background: #b9e5c5;
+  color: #294b36;
+  font-weight: 600;
+}
+
+.auth-panel button[type='submit']:hover:not(:disabled) {
+  background: #a4dcb4;
+}
+
+.auth-panel > button {
+  display: block;
+  margin: 12px auto 0;
+  padding: 10px 16px;
+  border: 0;
+  background: transparent;
+  color: #756b76;
+}
+
+.auth-panel > button:hover:not(:disabled) {
+  color: #453f46;
+  text-decoration: underline;
+}
+
+.auth-panel button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.auth-panel [role='status'] {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.auth-panel [role='status']:empty {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .auth-panel {
+    padding: 28px;
+  }
+}

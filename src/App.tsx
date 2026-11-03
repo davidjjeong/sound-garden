@@ -1,6 +1,18 @@
+import { useState } from 'react'
+import { AuthForm } from './components/AuthForm'
 import './App.css'
 
 function App() {
+  const [authMode, setAuthMode] = useState<'signup' | 'signin' | null>(null)
+
+  if (authMode) {
+    return (
+      <main className="landing">
+        <AuthForm key={authMode} mode={authMode} onClose={() => setAuthMode(null)} />
+      </main>
+    )
+  }
+
   return (
     <main className="landing">
       <header className="landing-header">
@@ -15,8 +27,12 @@ function App() {
           <p>A personal music playground you can shape with your hands.</p>
 
           <div className="hero-actions">
-            <button type="button">Create your garden</button>
-            <button type="button">Sign in</button>
+            <button type="button" onClick={() => setAuthMode('signup')}>
+              Create your garden
+            </button>
+            <button type="button" onClick={() => setAuthMode('signin')}>
+              Sign in
+            </button>
           </div>
         </div>
 
