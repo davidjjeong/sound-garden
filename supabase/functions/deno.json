@@ -4,6 +4,7 @@
   },
   "nodeModulesDir": "none",
   "imports": {
-    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.118.0"
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.118.0",
+    "music-metadata": "npm:music-metadata@12.3.4"
   }
 }

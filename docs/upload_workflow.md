@@ -1,7 +1,3 @@
-# System Architecture
-
-This markdown file is intended to explain the high-level design of the web app and the specific workflows each part of the system follows.
-
 ## Upload Workflow
 
 PostgreSQL stores the track metadata, and Supabase Storage stores the audio bytes. In order to coordinate them when uploads fail or requests are retried, our upload workflow looks like the following:
@@ -62,5 +58,50 @@ After PostgreSQL returns a reservation, the Edge Function:
 - Issues authorization only when necessary (for `"upload"`): For a track pending with missing file, it checks if enough time is remaining before expiry (do not issue for ones about to expire soon). It then generates a signed upload token (lasts 2 hours) scoped to the exact storage path. `upsert:false` prevents overwriting an existing file.
 
 ### 3. Browser uploads the file to private storage in Supabase.
+
 ### 4. Backend verifies the file and marks it ready for the track to be usable in the web app.
+
+Browser's helper function `finalizeUpload(trackId)` calls the server-side endpoint `finalize-upload` edge function deployed in Supabase. The endpoint accepts
+```json
+{
+    "trackId": "the-reserved-track-uuid"
+}
+```
+Browser supplies the user's access token in the `Authorization` header.
+
+Success response of this function looks like the following:
+```typescript
+{
+    action: "ready",
+    track: {
+        id,
+        title,
+        status: "ready",
+        storagePath,
+        mimeType,
+        sizeBytes,
+        expiresAt,
+    },
+}
+```
+
+Only `OPTIONS` and `POST` requests are accepted. Then, the endpoint asks Supabase Auth to validate the access token and identify the user. Once session is authenticated, we parse the JSON and validate the `trackId` (track must have the requested ID and belong to the authenticated user). 
+
+We download the uploaded file from Storage, checks the actual size, and converts it into bytes, which are passed onto `verifyAudio()`. 
+
+**How `verifyAudio()` works:** Audio file must be nonempty and no larger than 20 MiB. Only `audio/wav` and `audio/mpeg` are accepted. For WAV files, it checks the expected header markers:
+```
+Bytes 0-3: RIFF
+Bytes 8-11: WAVE
+```
+This ensures that renaming an arbitrary file into `.wav` will not satisfy this check. After validation, we use the npm package `music-metadata` to parse audio metadata, extracting info such as duration, sample rate, channels, container, and codec. The parsed result must have:
+- Expected container: `WAVE` or `MPEG`
+- Finite, positive duration
+- Sample rate and channel count
+- MP3 Layer III codec when the upload is MP3
+
+`verifyAudio()` does not implement full decoding but a structural verification. One may have to note that a file can pass these checks and still contain damaged audio frames or use a WAV codec that a particular browser cannot play.
+
+We finish our workflow with `rpc()`, which calls a PostgreSQL function `finalize_track_upload()` to perform the final checks and database update inside one transaction (maps known database error codes to HTTP responses, checks the returned row, and sends the `ready` response).
+
 ### 5. Track becomes playable.

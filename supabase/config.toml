@@ -4,6 +4,10 @@
 # working directory name when running `supabase init`.
 project_id = "sound-garden"
 
+[functions.finalize-upload]
+verify_jwt = false
+import_map = "./functions/deno.json"
+
 [functions.reserve-upload]
 verify_jwt = false
 import_map = "./functions/deno.json"
