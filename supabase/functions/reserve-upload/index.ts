@@ -36,7 +36,7 @@ const reservationErrors: Record<string, { status: number; message: string }> = {
   },
 };
 
-Deno.serve(async (request: Request) => {
+export async function handleRequest(request: Request): Promise<Response> {
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
@@ -146,9 +146,16 @@ Deno.serve(async (request: Request) => {
     }
 
     const storage = admin.storage.from("audio");
-    const { data: exists, error: existsError } = await storage.exists(
-      track.storage_path,
-    );
+    // exists() throws for upstream failures other than missing objects.
+    let existence: Awaited<ReturnType<typeof storage.exists>>;
+    try {
+      existence = await storage.exists(track.storage_path);
+    } catch {
+      return json({
+        error: "Unable to check uploaded file; retry this reservation",
+      }, 503);
+    }
+    const { data: exists, error: existsError } = existence;
     // Storage's HEAD endpoint reports missing objects as 400 or 404.
     if (existsError) {
       const status = "status" in existsError ? Number(existsError.status) : NaN;
@@ -187,4 +194,6 @@ Deno.serve(async (request: Request) => {
   } catch {
     return json({ error: "Unable to process the upload reservation" }, 500);
   }
-});
+}
+
+if (import.meta.main) Deno.serve(handleRequest);

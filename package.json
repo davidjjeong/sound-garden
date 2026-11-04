@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:edge": "DENO_DIR=/private/tmp/sound-garden-deno-cache .tools/deno/node_modules/.bin/deno test --allow-env --config supabase/functions/deno.json tests/edge/",
+    "test:all": "npm test && npm run test:edge"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
@@ -18,6 +22,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -26,9 +31,11 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.13.0",
+    "jsdom": "^29.1.1",
     "supabase": "^3.0.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.72.0",
-    "vite": "^8.3.5"
+    "vite": "^8.3.5",
+    "vitest": "^4.1.12"
   }
 }

@@ -1,5 +1,6 @@
-import { handleRequest } from "./index.ts";
-import { verifyAudio } from "./audio.ts";
+import { commonRequestTests } from "./helpers.ts";
+import { handleRequest } from "../../supabase/functions/finalize-upload/index.ts";
+import { verifyAudio } from "../../supabase/functions/finalize-upload/audio.ts";
 
 function assert(value: unknown, message = "Assertion failed"): asserts value {
   if (!value) throw new Error(message);
@@ -77,6 +78,23 @@ Deno.test("finalization: auth, ownership, retries, and verification before commi
       const scenario of [
         "unauthenticated",
         "missing",
+        "expired",
+        "deleting",
+        "size-mismatch",
+        "mime-mismatch",
+        "invalid-path",
+        "invalid-expiry",
+        "missing-version",
+        "info-failure",
+        "download-failure",
+        "download-size",
+        "commit-expired",
+        "commit-missing",
+        "commit-invalid",
+        "commit-failure",
+        "invalid-result",
+        "missing-file",
+        "commit-conflict",
         "ready",
         "invalid",
         "valid",
@@ -100,23 +118,60 @@ Deno.test("finalization: auth, ownership, retries, and verification before commi
             return response(
               scenario === "missing" ? null : {
                 ...base,
-                status: scenario === "ready" ? "ready" : "pending",
+                storage_path: scenario === "invalid-path"
+                  ? "wrong/path.wav"
+                  : base.storage_path,
+                status: scenario === "ready"
+                  ? "ready"
+                  : scenario === "deleting"
+                  ? "deleting"
+                  : "pending",
+                upload_expires_at: scenario === "invalid-expiry"
+                  ? "invalid"
+                  : scenario === "expired"
+                  ? "2000-01-01T00:00:00Z"
+                  : base.upload_expires_at,
               },
             );
           }
           if (url.pathname.includes("/storage/")) storageCalls++;
           if (url.pathname.includes("/object/info/")) {
+            if (scenario === "info-failure") {
+              return Promise.resolve(
+                Response.json({ message: "Forbidden" }, { status: 403 }),
+              );
+            }
+            if (scenario === "missing-file") {
+              return Promise.resolve(
+                Response.json({
+                  message: "Object not found",
+                  statusCode: "404",
+                  error: "not_found",
+                }, { status: 404 }),
+              );
+            }
             return response({
               id,
-              version: "v1",
-              size: base.size_bytes,
-              content_type: "audio/wav",
+              version: scenario === "missing-version" ? null : "v1",
+              size: scenario === "size-mismatch"
+                ? base.size_bytes + 1
+                : base.size_bytes,
+              content_type: scenario === "mime-mismatch"
+                ? "text/plain"
+                : "audio/wav",
             });
           }
           if (url.pathname.includes("/object/")) {
+            if (scenario === "download-failure") {
+              return Promise.resolve(
+                Response.json({ message: "Forbidden" }, { status: 403 }),
+              );
+            }
             return Promise.resolve(
               new Response(
-                scenario === "invalid"
+                scenario === "download-size"
+                  ? new Uint8Array(2)
+                  : scenario === "invalid"
                   ? new Uint8Array(base.size_bytes)
                   : wav(),
               ),
@@ -125,6 +180,33 @@ Deno.test("finalization: auth, ownership, retries, and verification before commi
           if (url.pathname === "/rest/v1/rpc/finalize_track_upload") {
             const args = JSON.parse(String(init?.body));
             assert(args.p_user_id === user && args.p_object_version === "v1");
+            if (
+              [
+                "commit-conflict",
+                "commit-expired",
+                "commit-missing",
+                "commit-invalid",
+                "commit-failure",
+              ].includes(scenario)
+            ) {
+              return Promise.resolve(
+                Response.json({
+                  code: ({
+                    "commit-conflict": "SG409",
+                    "commit-expired": "SG410",
+                    "commit-missing": "SG404",
+                    "commit-invalid": "SG422",
+                    "commit-failure": "XX000",
+                  } as Record<string, string>)[scenario],
+                  message: "Uploaded object changed; retry verification",
+                }, { status: 400 }),
+              );
+            }
+            if (scenario === "invalid-result") {
+              return Promise.resolve(
+                Response.json({ ...base, status: "pending" }),
+              );
+            }
             committed = true;
             return response({
               ...base,
@@ -146,6 +228,23 @@ Deno.test("finalization: auth, ownership, retries, and verification before commi
         const expected = ({
           unauthenticated: 401,
           missing: 404,
+          expired: 410,
+          deleting: 409,
+          "size-mismatch": 422,
+          "mime-mismatch": 422,
+          "invalid-path": 409,
+          "invalid-expiry": 410,
+          "missing-version": 503,
+          "info-failure": 503,
+          "download-failure": 503,
+          "download-size": 422,
+          "commit-expired": 410,
+          "commit-missing": 404,
+          "commit-invalid": 422,
+          "commit-failure": 503,
+          "invalid-result": 500,
+          "missing-file": 409,
+          "commit-conflict": 409,
           ready: 200,
           invalid: 422,
           valid: 200,
@@ -158,7 +257,10 @@ Deno.test("finalization: auth, ownership, retries, and verification before commi
           committed === (scenario === "valid"),
           "Only verified uploads may commit",
         );
-        if (["unauthenticated", "missing", "ready"].includes(scenario)) {
+        if (
+          ["unauthenticated", "missing", "expired", "deleting", "ready"]
+            .includes(scenario)
+        ) {
           assert(storageCalls === 0);
         }
       });
@@ -168,5 +270,39 @@ Deno.test("finalization: auth, ownership, retries, and verification before commi
     keys.forEach((key, i) =>
       old[i] === undefined ? Deno.env.delete(key) : Deno.env.set(key, old[i]!)
     );
+  }
+});
+
+commonRequestTests("finalize-upload", handleRequest, {
+  trackId: "11111111-1111-4111-8111-111111111111",
+});
+
+Deno.test("audio verification rejects size, type, and header boundaries", async (t) => {
+  const noWave = wav();
+  noWave[8] = 0;
+  const noRiff = wav();
+  noRiff[0] = 0;
+  const emptySamples = wav();
+  new DataView(emptySamples.buffer).setUint32(40, 0, true);
+  const cases: [string, Uint8Array, string][] = [
+    ["empty", new Uint8Array(), "audio/mpeg"],
+    ["oversize", new Uint8Array(20971521), "audio/mpeg"],
+    ["unsupported MIME", wav(), "audio/aac"],
+    ["truncated WAV header", wav().subarray(0, 20), "audio/wav"],
+    ["missing RIFF marker", noRiff, "audio/wav"],
+    ["missing WAVE marker", noWave, "audio/wav"],
+    ["no sample data", emptySamples, "audio/wav"],
+    ["random MP3 bytes", new Uint8Array(100), "audio/mpeg"],
+  ];
+  for (const [name, bytes, mime] of cases) {
+    await t.step(name, async () => {
+      let rejected = false;
+      try {
+        await verifyAudio(bytes, mime);
+      } catch {
+        rejected = true;
+      }
+      assert(rejected, name);
+    });
   }
 });
