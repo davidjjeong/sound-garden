@@ -67,3 +67,24 @@
 .upload-feedback button:hover:not(:disabled) { background: #edf3ef; border-color: #b7c9bd; }
 .upload-status { margin: 0; color: #597161; font-size: 13px; line-height: 1.5; }
 .upload-status:empty { display: none; }
+
+.track-row-actions { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.track-delete { display: grid; place-items: center; box-sizing: border-box; flex: 0 0 36px; width: 36px; height: 36px; padding: 0; line-height: 0; border: 1px solid transparent; border-radius: 10px; background: transparent; color: #7a837d; transition: color 160ms, background-color 160ms, border-color 160ms; }
+.track-delete svg, .delete-dialog-icon svg { display: block; width: 20px; height: 20px; }
+.track-delete:hover:not(:disabled) { color: #fff; background: #303a34; border-color: #303a34; }
+.track-delete:focus-visible, .delete-dialog button:focus-visible { outline: 2px solid #89a995; outline-offset: 3px; }
+.delete-dialog { width: min(420px, calc(100vw - 40px)); box-sizing: border-box; padding: 28px; border: 1px solid #e6eae7; border-radius: 20px; background: #fff; color: #303735; box-shadow: 0 24px 80px #1c302329; }
+.delete-dialog::backdrop { background: #14251b55; backdrop-filter: blur(3px); }
+.delete-dialog-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; background: #edf3ef; color: #303a34; }
+.delete-dialog h2 { margin: 18px 0 10px; font-size: 22px; letter-spacing: -.5px; }
+.delete-dialog p { font-size: 14px; line-height: 1.65; overflow-wrap: anywhere; color: #737b77; }
+.delete-dialog .delete-error { color: #a33d3d; }
+.delete-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.delete-dialog button { display: inline-flex; align-items: center; gap: 8px; padding: 10px 15px; border: 1px solid #e0e6e2; border-radius: 10px; background: #fff; color: #303735; font: inherit; font-size: 13px; font-weight: 600; transition: background-color 160ms; }
+.delete-dialog button:hover:not(:disabled) { background: #f1f5f2; }
+.delete-dialog .delete-confirm { background: #303a34; color: white; border-color: #303a34; }
+.delete-dialog .delete-confirm:hover:not(:disabled) { background: #425649; }
+.delete-dialog button:disabled { cursor: wait; opacity: .6; }
+.delete-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: delete-spin .8s linear infinite; }
+@keyframes delete-spin { to { transform: rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) { .delete-spinner { animation: none; } .track-delete, .delete-dialog button { transition: none; } }

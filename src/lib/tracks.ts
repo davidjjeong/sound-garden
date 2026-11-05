@@ -194,3 +194,23 @@ export async function finalizeUpload(trackId: string): Promise<ReadyTrack> {
 
   return { ...data.track, status: 'ready' }
 }
+
+/** Deletes through the backend; uncertain failures must retry the same ID. */
+export async function deleteTrack(trackId: string): Promise<string> {
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!uuid.test(trackId)) throw new Error('A valid track ID is required for deletion.')
+  const id = trackId.toLowerCase()
+  const { data, error } = await supabase.functions.invoke<unknown>('delete-track', {
+    body: { trackId: id },
+  })
+  if (error) {
+    const body: unknown = error instanceof FunctionsHttpError
+      ? await error.context.json().catch(() => null) : null
+    throw new Error(isObject(body) && typeof body.error === 'string'
+      ? body.error : 'Could not confirm deletion. Retry deletion to check its status.')
+  }
+  if (!isObject(data) || data.action !== 'deleted' || data.trackId !== id) {
+    throw new Error('Could not confirm deletion. Retry deletion to check its status.')
+  }
+  return id
+}

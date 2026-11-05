@@ -52,5 +52,6 @@ explicitly. Never expose the service-role key in browser code.
 Run `npm run test:edge` or `npm run test:all`. Cases are listed in
 [tests/README.md](../../../tests/README.md). Services/RPCs are mocked: tests do not
 execute SQL or prove hosted RLS/concurrency. No real files are deleted by tests.
-The browser helper, confirmation dialog, trash button, and playback handling
-are the next implementation step.
+The browser helper, confirmation dialog, trash button, and retained retry state
+are connected. Playback remains a placeholder; stopping/clearing an active track
+must be wired when the audio engine is implemented.

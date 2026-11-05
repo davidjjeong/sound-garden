@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { FunctionsHttpError } from '@supabase/supabase-js'
-import { finalizeUpload, reserveUpload, uploadReservedFile } from '../../src/lib/tracks'
+import { deleteTrack, finalizeUpload, reserveUpload, uploadReservedFile } from '../../src/lib/tracks'
 
 const mocks = vi.hoisted(() => ({ invoke: vi.fn(), from: vi.fn(), transfer: vi.fn() }))
 vi.mock('../../src/lib/supabase', () => ({
@@ -115,5 +115,26 @@ describe('additional API failure boundaries', () => {
   it.each(['reserve', 'finalize'])('handles transport errors: %s', async (stage) => {
     mocks.invoke.mockResolvedValue({ data: null, error: new Error('Offline') })
     await expect(stage === 'reserve' ? reserveUpload(file(), 'key') : finalizeUpload(id)).rejects.toThrow()
+  })
+})
+
+
+describe('deleteTrack API contract', () => {
+  it('validates IDs before calling the endpoint', async () => {
+    await expect(deleteTrack('invalid')).rejects.toThrow('valid track ID')
+    expect(mocks.invoke).not.toHaveBeenCalled()
+  })
+  it('sends only the ID and accepts a matching deletion response', async () => {
+    mocks.invoke.mockResolvedValue({ data: { action: 'deleted', trackId: id }, error: null })
+    await expect(deleteTrack(id)).resolves.toBe(id)
+    expect(mocks.invoke).toHaveBeenCalledWith('delete-track', { body: { trackId: id } })
+  })
+  it.each([null, { action: 'ready', trackId: id }, { action: 'deleted', trackId: owner }])('rejects an uncertain/mismatched result %#', async (data) => {
+    mocks.invoke.mockResolvedValue({ data, error: null })
+    await expect(deleteTrack(id)).rejects.toThrow('Retry deletion')
+  })
+  it('preserves server errors', async () => {
+    mocks.invoke.mockResolvedValue({ data: null, error: new FunctionsHttpError(new Response(JSON.stringify({ error: 'Only completed tracks can be deleted' }), { status: 409 })) })
+    await expect(deleteTrack(id)).rejects.toThrow('Only completed tracks')
   })
 })

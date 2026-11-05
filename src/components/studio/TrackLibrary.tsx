@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { getTracks } from '../../lib/tracks'
+import { useTrackDeletion } from '../../hooks/useTrackDeletion'
+import { DeleteTrackDialog, TrashIcon } from './DeleteTrackDialog'
 import { useTrackUpload } from '../../hooks/useTrackUpload'
 
 type Track = Awaited<ReturnType<typeof getTracks>>[number]
 
 export function TrackLibrary() {
+  const deletion = useTrackDeletion()
+  const removedIds = useRef(new Set<string>())
+  const [deleteMessage, setDeleteMessage] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const [tracks, setTracks] = useState<Track[]>([])
   const [loading, setLoading] = useState(true)
@@ -20,7 +25,7 @@ export function TrackLibrary() {
     getTracks()
       .then((data) => {
         if (active) {
-          setTracks(data)
+          setTracks(data.filter((track) => !removedIds.current.has(track.id)))
           setLibraryError('')
         }
       })
@@ -49,6 +54,15 @@ export function TrackLibrary() {
     await startUpload(file)
   }
 
+  async function handleDelete() {
+    const id = await deletion.confirm()
+    if (id) {
+      removedIds.current.add(id)
+      setTracks((current) => current.filter((track) => track.id !== id))
+      setDeleteMessage('Track deleted.')
+    }
+  }
+
   const uploadMessage = {
     idle: '',
     reserving: 'Preparing your upload…',
@@ -64,6 +78,17 @@ export function TrackLibrary() {
 
   return (
     <>
+      {deletion.isOpen && deletion.target && (
+        <DeleteTrackDialog title={deletion.target.title} isDeleting={deletion.isDeleting}
+          error={deletion.error} onClose={deletion.close} onConfirm={() => void handleDelete()} />
+      )}
+      {deletion.error && !deletion.isOpen && (
+        <div className="upload-feedback">
+          <p role="alert">Could not finish deleting “{deletion.target?.title}”. {deletion.error}</p>
+          <button type="button" onClick={deletion.reopen}>Retry deletion</button>
+        </div>
+      )}
+      <p className="upload-status" role="status" aria-atomic="true">{deleteMessage}</p>
       <input
         ref={inputRef}
         type="file"
@@ -153,9 +178,15 @@ export function TrackLibrary() {
           {filteredTracks.map((track) => (
             <li className="track-row" key={track.id}>
               <span>{track.title}</span>
-              <span className="track-size">
-                {(track.size_bytes / 1024 / 1024).toFixed(1)} MB
-              </span>
+              <div className="track-row-actions">
+                <span className="track-size">{(track.size_bytes / 1024 / 1024).toFixed(1)} MB</span>
+                <button className="track-delete" type="button" aria-label={`Delete ${track.title}`}
+                  title={`Delete ${track.title}`} disabled={deletion.target !== null}
+                  onClick={(event) => { event.stopPropagation(); setDeleteMessage(''); deletion.choose(track) }}>
+                  {deletion.isDeleting && deletion.target?.id === track.id
+                    ? <span className="delete-spinner" aria-hidden="true" /> : <TrashIcon />}
+                </button>
+              </div>
             </li>
           ))}
         </ul>

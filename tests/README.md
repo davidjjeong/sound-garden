@@ -17,6 +17,7 @@ All services are mocked: no credentials, live uploads, or deletions are used.
 ```text
 tests/
 ├── browser/
+│   ├── TrackLibrary.test.ts
 │   ├── tracks.test.ts
 │   └── useTrackUpload.test.ts
 └── edge/
@@ -54,6 +55,18 @@ tests/
 - Invalid finalization IDs stop before invocation.
 - Rejects pending tracks, wrong IDs, and wrong actions in finalization responses; accepts the expected ready track.
 - JSON endpoint errors retain useful messages; non-JSON HTTP failures and transport failures reject safely.
+
+### `browser/TrackLibrary.test.ts` — deletion interaction
+
+- Trash opens a named confirmation with Cancel focused; no deletion occurs before confirmation.
+- Cancel and Escape close without calling the endpoint.
+- Success removes only the target, updates the count, and shows the empty state for the last track.
+- In-flight deletion disables confirmation/cancel and blocks duplicate clicks and Escape dismissal.
+- Failure remains retryable after closing/reopening; retry uses the original track ID.
+- Native dialog visibility is simulated in jsdom; actual focus trapping/restoration and appearance need a browser check.
+
+Additional `tracks.test.ts` deletion cases: invalid IDs stop locally; valid calls send
+only trackId; null/wrong-action/wrong-ID responses fail; server errors are preserved.
 
 ## Edge cases
 
@@ -119,6 +132,6 @@ real signed-token expiry, or real object replacement during verification.
 
 Those require a separate Supabase integration test project and two test users.
 Also outstanding: UI-level upload/playback checks, full audio decoding/browser
-codec compatibility, automatic expired-upload cleanup, browser deletion controls, and content
+codec compatibility, automatic expired-upload cleanup, active-track playback cleanup, and content
 hash deduplication. No test claims those features exist. Audio recognition is
 structural, not proof that every audio frame decodes.

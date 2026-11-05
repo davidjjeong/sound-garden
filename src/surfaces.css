@@ -15,8 +15,8 @@ body { background: #f7f7f8; }
 .hero p { color: var(--muted); font-size: 16px; }
 .hero-actions { gap: 12px; }
 button:not(.wave-artwork) { border-radius: 12px; transition: background-color 180ms,border-color 180ms,box-shadow 180ms,transform 180ms var(--ease),color 180ms; }
-button:not(:disabled):not(.wave-artwork):hover { transform: translateY(-1px); }
-button:not(:disabled):not(.wave-artwork):active { transform: translateY(1px); }
+button:not(:disabled):not(.wave-artwork):not(.track-delete):hover { transform: translateY(-1px); }
+button:not(:disabled):not(.wave-artwork):not(.track-delete):active { transform: translateY(1px); }
 button:focus-visible,a:focus-visible { outline: 2px solid #527a62; outline-offset: 4px; }
 button:disabled { cursor: not-allowed; }
 .hero-actions button,.account button,.session-status button,.gesture-toolbar button,.library-player button {
