@@ -20,6 +20,7 @@ tests/
 │   ├── tracks.test.ts
 │   └── useTrackUpload.test.ts
 └── edge/
+    ├── delete-track.test.ts
     ├── helpers.ts
     ├── reserve-upload.test.ts
     └── finalize-upload.test.ts
@@ -59,7 +60,7 @@ tests/
 ### `edge/helpers.ts` — shared test utilities
 
 Restores environment variables and mocked fetch after each suite. Registers the
-following request guards for **both endpoints**:
+following request guards for **all three endpoints**:
 
 - OPTIONS → 204 with CORS; GET/PUT → 405; no upstream calls.
 - Missing, Basic, empty Bearer, and multi-token authorization → 401 before upstream calls.
@@ -95,6 +96,20 @@ following request guards for **both endpoints**:
 - Generated PCM WAV and synthetic MP3 frames pass format recognition; mislabeled/random content fails.
 - Empty/oversize audio, unsupported MIME, truncated WAV header, missing RIFF/WAVE markers, and zero sample data fail.
 
+### `edge/delete-track.test.ts` — protected, retryable deletion
+
+- Missing/unowned track returns indistinguishable success without Storage access.
+- Successful MP3/WAV deletion calls begin → Storage remove → finish, with the authenticated owner and exact path.
+- Pending upload conflict → 409; begin RPC failure → 503; neither removes files.
+- Wrong returned owner/ID/state/MIME/path or malformed row → 500 before Storage access.
+- Missing file (successful empty removal) still finishes database deletion.
+- Storage failure, thrown transport error, or ambiguous 404 → 503 without calling finish.
+- Finish conflict → 409; finish failure → 503 and remains retryable.
+- Lost finish response retries against the now-missing row without another removal.
+- Retry after Storage failure completes both steps; retry after finish failure handles the already-absent file.
+- Additional client owner/path fields are ignored; IDs are canonicalized.
+- Shared HTTP/auth/body guards also apply to this endpoint.
+
 ## Coverage limits
 
 These tests execute the browser helpers/hooks and endpoint code, **not PostgreSQL**.
@@ -104,6 +119,6 @@ real signed-token expiry, or real object replacement during verification.
 
 Those require a separate Supabase integration test project and two test users.
 Also outstanding: UI-level upload/playback checks, full audio decoding/browser
-codec compatibility, automatic expired-upload cleanup, deletion, and content
+codec compatibility, automatic expired-upload cleanup, browser deletion controls, and content
 hash deduplication. No test claims those features exist. Audio recognition is
 structural, not proof that every audio frame decodes.
