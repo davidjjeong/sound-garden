@@ -67,6 +67,7 @@ Deno.test("reserve-upload: validation, routing, and retry contracts", async (t) 
       { name: "RPC idempotency conflict", status: 409, code: "SG409" },
       { name: "RPC expired", status: 410, code: "SG410" },
       { name: "RPC quota exceeded", status: 413, code: "SG413" },
+      { name: "RPC duplicate", status: 409, code: "SGDUP" },
       { name: "RPC unknown failure", status: 500, code: "XX000" },
       { name: "RPC returns null", status: 500, badTrack: "null" },
       { name: "RPC wrong owner", status: 500, badTrack: "owner" },
@@ -209,6 +210,37 @@ Deno.test("reserve-upload: validation, routing, and retry contracts", async (t) 
         );
         assert(calls === 1, "Invalid request must not create a reservation");
       });
+    }
+  });
+});
+
+Deno.test("reserve-upload: forwards a hash hint and rejects malformed hints before RPC", async () => {
+  await sandbox(async () => {
+    for (const hint of ["a".repeat(64), "invalid", null, 123]) {
+      let rpc = false;
+      let args: Record<string, unknown> = {};
+      globalThis.fetch = (input, init) => {
+        const url = new URL(
+          input instanceof Request ? input.url : String(input),
+        );
+        if (url.pathname === "/auth/v1/user") {
+          return Promise.resolve(json({ id: userId }));
+        }
+        rpc = true;
+        args = JSON.parse(String(init?.body));
+        return Promise.resolve(json({ code: "SGDUP" }, 400));
+      };
+      const response = await handleRequest(
+        request({ ...valid, contentHash: hint }),
+      );
+      assert(
+        response.status ===
+          (typeof hint === "string" && hint.length === 64 ? 409 : 400),
+      );
+      if (rpc) {
+        assert(args.p_content_hash === hint && args.p_user_id === userId);
+        assert((await response.json()).code === "DUPLICATE_TRACK");
+      } else assert(hint !== "a".repeat(64));
     }
   });
 });

@@ -1,3 +1,5 @@
+import { hashAudioFile } from './contentHash'
+import { DuplicateTrackError } from './uploadErrors'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import type { ReservationResponse, ReservedTrack, SignedUpload, ReadyTrack } from '../types/uploads'
 import { supabase } from './supabase'
@@ -65,7 +67,10 @@ function isReservationResponse(
 export async function reserveUpload(
   file: File,
   idempotencyKey: string,
+  contentHash?: string,
 ): Promise<ReservationResponse> {
+  const hash = contentHash ?? await hashAudioFile(file)
+  if (!/^[0-9a-f]{64}$/.test(hash)) throw new Error('Invalid audio fingerprint.')
   const { data, error } = await supabase.functions.invoke<unknown>(
     'reserve-upload',
     {
@@ -73,6 +78,7 @@ export async function reserveUpload(
         idempotencyKey,
         filename: file.name,
         sizeBytes: file.size,
+        contentHash: hash,
       },
     },
   )
@@ -80,6 +86,7 @@ export async function reserveUpload(
   if (error) {
     if (error instanceof FunctionsHttpError) {
       const body: unknown = await error.context.json().catch(() => null)
+      if (isObject(body) && body.code === 'DUPLICATE_TRACK') throw new DuplicateTrackError()
 
       throw new Error(
         isObject(body) && typeof body.error === 'string'
@@ -169,6 +176,7 @@ export async function finalizeUpload(trackId: string): Promise<ReadyTrack> {
   if (error) {
     if (error instanceof FunctionsHttpError) {
       const body: unknown = await error.context.json().catch(() => null)
+      if (isObject(body) && body.code === 'DUPLICATE_TRACK') throw new DuplicateTrackError()
 
       throw new Error(
         isObject(body) && typeof body.error === 'string'

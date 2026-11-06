@@ -24,7 +24,7 @@ describe('browser upload API contract', () => {
     mocks.invoke.mockResolvedValue({ data: { action: 'upload', track, upload: authorization }, error: null })
     await reserveUpload(file(), 'retained-key')
     expect(mocks.invoke).toHaveBeenCalledWith('reserve-upload', {
-      body: { idempotencyKey: 'retained-key', filename: 'song.mp3', sizeBytes: 3 },
+      body: { idempotencyKey: 'retained-key', filename: 'song.mp3', sizeBytes: 3, contentHash: 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad' },
     })
   })
   it.each([
@@ -136,5 +136,12 @@ describe('deleteTrack API contract', () => {
   it('preserves server errors', async () => {
     mocks.invoke.mockResolvedValue({ data: null, error: new FunctionsHttpError(new Response(JSON.stringify({ error: 'Only completed tracks can be deleted' }), { status: 409 })) })
     await expect(deleteTrack(id)).rejects.toThrow('Only completed tracks')
+  })
+})
+
+describe('duplicate upload responses', () => {
+  it.each(['reserve', 'finalize'])('maps %s duplicate rejection to a terminal typed error', async (stage) => {
+    mocks.invoke.mockResolvedValue({ data: null, error: new FunctionsHttpError(new Response(JSON.stringify({ code: 'DUPLICATE_TRACK', error: 'duplicate' }), { status: 409 })) })
+    await expect(stage === 'reserve' ? reserveUpload(file(), 'key') : finalizeUpload(id)).rejects.toMatchObject({ code: 'DUPLICATE_TRACK', message: 'This file is already in your library.' })
   })
 })

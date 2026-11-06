@@ -79,13 +79,16 @@ export async function handleRequest(request: Request): Promise<Response> {
     if (typeof body !== "object" || body === null || Array.isArray(body)) {
       return json({ error: "Request body must be an object" }, 400);
     }
-    const { idempotencyKey, filename, sizeBytes } = body as Record<
+    const { idempotencyKey, filename, sizeBytes, contentHash } = body as Record<
       string,
       unknown
     >;
     const uuidPattern =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (
+      (contentHash !== undefined &&
+        (typeof contentHash !== "string" ||
+          !/^[0-9a-f]{64}$/.test(contentHash))) ||
       typeof idempotencyKey !== "string" || !uuidPattern.test(idempotencyKey) ||
       typeof filename !== "string" || filename.length > 255 ||
       !/\.(mp3|wav)$/i.test(filename) ||
@@ -104,7 +107,14 @@ export async function handleRequest(request: Request): Promise<Response> {
       p_idempotency_key: idempotencyKey,
       p_filename: filename,
       p_size_bytes: sizeBytes,
+      p_content_hash: contentHash ?? null,
     });
+    if (error?.code === "SGDUP") {
+      return json({
+        error: "This file is already in your library.",
+        code: "DUPLICATE_TRACK",
+      }, 409);
+    }
     if (error) {
       const known = reservationErrors[error.code];
       if (known) {

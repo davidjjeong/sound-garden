@@ -94,6 +94,7 @@ Deno.test("finalization: auth, ownership, retries, and verification before commi
         "commit-failure",
         "invalid-result",
         "missing-file",
+        "commit-duplicate",
         "commit-conflict",
         "ready",
         "invalid",
@@ -101,6 +102,10 @@ Deno.test("finalization: auth, ownership, retries, and verification before commi
       ]
     ) {
       await t.step(scenario, async () => {
+        const expectedHash = Array.from(
+          new Uint8Array(await crypto.subtle.digest("SHA-256", wav())),
+          (b) => b.toString(16).padStart(2, "0"),
+        ).join("");
         let committed = false;
         let storageCalls = 0;
         globalThis.fetch = (input, init) => {
@@ -180,8 +185,13 @@ Deno.test("finalization: auth, ownership, retries, and verification before commi
           if (url.pathname === "/rest/v1/rpc/finalize_track_upload") {
             const args = JSON.parse(String(init?.body));
             assert(args.p_user_id === user && args.p_object_version === "v1");
+            assert(
+              args.p_content_hash === expectedHash,
+              "Server must hash actual bytes",
+            );
             if (
               [
+                "commit-duplicate",
                 "commit-conflict",
                 "commit-expired",
                 "commit-missing",
@@ -192,6 +202,7 @@ Deno.test("finalization: auth, ownership, retries, and verification before commi
               return Promise.resolve(
                 Response.json({
                   code: ({
+                    "commit-duplicate": "SGDUP",
                     "commit-conflict": "SG409",
                     "commit-expired": "SG410",
                     "commit-missing": "SG404",
@@ -222,7 +233,7 @@ Deno.test("finalization: auth, ownership, retries, and verification before commi
             headers: scenario === "unauthenticated"
               ? {}
               : { Authorization: "Bearer token" },
-            body: JSON.stringify({ trackId: id }),
+            body: JSON.stringify({ trackId: id, contentHash: "f".repeat(64) }),
           }),
         );
         const expected = ({
@@ -244,6 +255,7 @@ Deno.test("finalization: auth, ownership, retries, and verification before commi
           "commit-failure": 503,
           "invalid-result": 500,
           "missing-file": 409,
+          "commit-duplicate": 409,
           "commit-conflict": 409,
           ready: 200,
           invalid: 422,

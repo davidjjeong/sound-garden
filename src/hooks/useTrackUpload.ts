@@ -1,3 +1,4 @@
+import { DuplicateTrackError } from '../lib/uploadErrors'
 import { useEffect, useRef, useState } from 'react'
 import {
   finalizeUpload,
@@ -90,12 +91,14 @@ export function useTrackUpload() {
       setState({ status: 'complete', error: null, completedTrack: track, canRetry: false })
       return track
     } catch (error) {
+      const duplicate = error instanceof DuplicateTrackError
+      if (duplicate) attemptRef.current = null
       if (active()) {
         setState({
           status: 'error',
           error: error instanceof Error ? error.message : 'Upload failed. Please try again.',
           completedTrack: null,
-          canRetry: true,
+          canRetry: !duplicate,
         })
       }
       // Preserve the file and key: an uncertain request may have succeeded.

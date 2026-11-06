@@ -1,3 +1,4 @@
+import { DuplicateTrackError } from '../../src/lib/uploadErrors'
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useTrackUpload } from '../../src/hooks/useTrackUpload'
@@ -190,4 +191,17 @@ describe('upload lifecycle boundaries', () => {
     await act(async () => { await result.current.startUpload(selected) })
     expect(reserve).toHaveBeenCalledWith(selected, expect.any(String))
   })
+})
+
+
+it.each(['reserve', 'finalize'])('duplicate rejection at %s disables retry and releases the attempt', async (stage) => {
+  if (stage === 'reserve') reserve.mockRejectedValueOnce(new DuplicateTrackError())
+  else finalize.mockRejectedValueOnce(new DuplicateTrackError())
+  const { result } = renderHook(() => useTrackUpload())
+  await act(async () => { await result.current.startUpload(file()) })
+  expect(result.current.error).toBe('This file is already in your library.')
+  expect(result.current.canRetry).toBe(false)
+  const calls = reserve.mock.calls.length
+  await act(async () => { expect(await result.current.retryUpload()).toBeNull() })
+  expect(reserve).toHaveBeenCalledTimes(calls)
 })

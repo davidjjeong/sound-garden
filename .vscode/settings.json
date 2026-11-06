@@ -2,7 +2,8 @@
   "deno.enable": true,
   "deno.enablePaths": [
     "supabase/functions",
-    "tests/edge"
+    "tests/edge",
+    "scripts"
   ],
   "deno.config": "supabase/functions/deno.json",
   "deno.path": "./.tools/deno/node_modules/.bin/deno"

@@ -1,7 +1,7 @@
 # Upload workflow tests
 
 ```sh
-npm test               # browser tests (Vitest + jsdom)
+npm test               # browser + embedded PostgreSQL tests (Vitest)
 npm run test:watch     # browser tests while editing
 npm run test:edge      # endpoint/audio tests (Deno)
 npm run test:all       # both suites
@@ -41,7 +41,7 @@ tests/
 - Unmount during reservation stops transfer; unmount during transfer stops verification.
 - Empty files, unsupported extensions, files over 20 MiB, and names over 255 characters are rejected locally.
 - Uppercase WAV and exactly 20 MiB are accepted by local validation.
-- Selecting the same file again creates a fresh key: content deduplication is currently absent.
+- Selecting the same file again creates a fresh key; verified hash checks separately enforce content deduplication.
 
 ### `browser/tracks.test.ts` — Supabase helper contracts
 
@@ -125,13 +125,48 @@ following request guards for **all three endpoints**:
 
 ## Coverage limits
 
-These tests execute the browser helpers/hooks and endpoint code, **not PostgreSQL**.
+Browser and edge suites execute helpers/hooks and endpoint code, **not hosted PostgreSQL**. The local database suite described below additionally executes SQL.
 RPC errors and returned rows are simulated; the tests do not prove SQL correctness,
 RLS isolation, idempotency uniqueness, concurrent quota enforcement, row locking,
 real signed-token expiry, or real object replacement during verification.
 
 Those require a separate Supabase integration test project and two test users.
 Also outstanding: UI-level upload/playback checks, full audio decoding/browser
-codec compatibility, automatic expired-upload cleanup, active-track playback cleanup, and content
-hash deduplication. No test claims those features exist. Audio recognition is
+codec compatibility, hosted cleanup scheduling/integration, active-track playback cleanup, and hosted multi-session deduplication checks. No test claims unimplemented features exist. Audio recognition is
 structural, not proof that every audio frame decodes.
+
+
+## Duplicate-prevention coverage
+
+- `browser/contentHash.test.ts`: known SHA-256 vector, identical renamed bytes,
+  different bytes, and cached retries.
+- Browser helper/hook tests: hash in reservation request, typed duplicate errors
+  from either endpoint, no retry after duplicate rejection, new attempts still
+  receive distinct idempotency keys.
+- Edge tests: valid/invalid hints, duplicate error mapping, and finalization hash
+  computed from actual downloaded bytes rather than the request hint.
+- `database/deduplication.test.ts`: executes the SQL migrations/functions in
+  embedded PostgreSQL (PGlite), checking per-user uniqueness, two pending copies,
+  rollback/expiry retention, retries, differing content, other users, forged
+  claims, invalid hashes, legacy backfill, and release on deletion.
+
+The earlier mocked-test coverage limits still apply to hosted SQL/RLS/Storage.
+The database suite now executes SQL locally, but PGlite uses one session and
+cannot prove live multi-session concurrency. Full rollout/backfill and cleanup
+limits are documented in [duplicate prevention](../docs/duplicate_prevention.md).
+
+
+## Expired-upload cleanup coverage
+
+- `edge/cleanup-uploads.test.ts`: method/job-secret guards, missing configuration,
+  empty work, successful/missing-file removal, mixed batch failures, invalid
+  owner/path/reason, lost lease, renewal/removal/completion failures, and retry
+  scheduling failure. Checks removal ordering and exact Storage paths.
+- `database/upload-cleanup.test.ts`: executes the migration in PGlite. Tests expiry
+  plus grace, unexpired/ready/null-expiry exclusions, user-deletion separation,
+  active leases, expired lease reclaim, token replacement, stale-worker fencing,
+  renewal, exponential retry delay/cap, matching completion, missing-row completion,
+  batch limits, finalization rejection after claim, and restricted execution.
+- Scheduler setup is optional SQL under `supabase/schedules/`, not an enabled
+  migration. pg_cron/pg_net/Vault and genuine multi-session SKIP LOCKED behavior
+  require hosted verification. No live files are deleted by these tests.

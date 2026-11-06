@@ -7,7 +7,7 @@ Creates or resumes one user's upload attempt before any bytes are transferred.
 Authenticated POST body:
 
 ```json
-{ "idempotencyKey": "<uuid>", "filename": "song.mp3", "sizeBytes": 12345 }
+{ "idempotencyKey": "<uuid>", "filename": "song.mp3", "sizeBytes": 12345, "contentHash": "<sha256-hex>" }
 ```
 
 | Action | Meaning | Browser next step |
@@ -18,7 +18,7 @@ Authenticated POST body:
 
 Each response includes `track: { id, title, status, storagePath, mimeType,
 sizeBytes, expiresAt }`. Reuse the **same key** when retrying uncertain requests.
-A new key represents a new attempt; identical file content is not deduplicated.
+A new key represents a new attempt. The optional browser hash is an early-check hint; matching a verified ready track for the same owner rejects with 409 / `DUPLICATE_TRACK`.
 
 ## Workflow
 
@@ -29,7 +29,7 @@ A new key represents a new attempt; identical file content is not deduplicated.
 5. Return a signed upload token with overwrite disabled. Upstream existence/signing failures return retryable 503 responses.
 
 The quota counts pending/ready/deleting rows, including abandoned reservations.
-There is no cleanup worker yet. This endpoint does not upload bytes, inspect audio,
+The `cleanup-uploads` worker removes eligible expired pending rows once its migration/deployment/schedule are activated. This endpoint does not upload bytes, inspect audio,
 or mark tracks ready. Database and Storage operations are separate steps.
 
 ## Activate
@@ -51,3 +51,5 @@ Never expose the service-role key to the browser.
 [the test case inventory](../../../tests/README.md#edgereserve-uploadtestts--reservation-and-signed-upload-routing).
 Tests mock Supabase HTTP responses; real RPC transactions, RLS, signed tokens,
 and concurrent quota/idempotency behavior require hosted integration checks.
+
+See [duplicate prevention](../../../docs/duplicate_prevention.md) for the new migration, rollout, and backfill requirements.

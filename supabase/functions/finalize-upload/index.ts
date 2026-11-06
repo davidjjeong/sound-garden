@@ -131,9 +131,10 @@ export async function handleRequest(request: Request): Promise<Response> {
     if (file.size !== track.size_bytes) {
       return json({ error: "Uploaded file size mismatch" }, 422);
     }
+    const bytes = new Uint8Array(await file.arrayBuffer());
     try {
       await verifyAudio(
-        new Uint8Array(await file.arrayBuffer()),
+        bytes,
         track.mime_type,
       );
     } catch {
@@ -142,6 +143,11 @@ export async function handleRequest(request: Request): Promise<Response> {
         422,
       );
     }
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    const contentHash = Array.from(
+      new Uint8Array(digest),
+      (byte) => byte.toString(16).padStart(2, "0"),
+    ).join("");
     const { data: finalized, error: finalError } = await admin.rpc(
       "finalize_track_upload",
       {
@@ -149,8 +155,17 @@ export async function handleRequest(request: Request): Promise<Response> {
         p_track_id: track.id,
         p_object_id: info.id,
         p_object_version: info.version,
+        p_content_hash: contentHash,
       },
     );
+    if (finalError?.code === "SGDUP") {
+      // Keep the rejected reservation pending until all issued tokens expire.
+      // Immediate deletion could allow token replay to recreate an orphan.
+      return json({
+        error: "This file is already in your library.",
+        code: "DUPLICATE_TRACK",
+      }, 409);
+    }
     if (finalError) {
       const status =
         ({ SG404: 404, SG409: 409, SG410: 410, SG422: 422 } as Record<

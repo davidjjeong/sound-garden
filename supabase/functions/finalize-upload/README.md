@@ -19,12 +19,12 @@ repeating verification, so a lost response can be retried safely.
 1. Handle CORS/method checks, authenticate with `auth.getUser`, and validate the track ID.
 2. Load the track by ID **and authenticated owner**. Pending tracks must be unexpired; deleting tracks cannot finalize.
 3. Check the reserved path/type/size and Storage metadata. Download the file, compare actual size, and recognize MP3/WAV structure using `music-metadata`.
-4. Call service-only `finalize_track_upload`. In one transaction it locks the track, rechecks status/expiry, locks the Storage metadata, and compares object ID/version/size/MIME.
-5. Commit `status = 'ready'`, `ready_at`, and null `upload_expires_at`; return the browser's ready-track contract.
+4. Compute SHA-256 from downloaded bytes, ignoring client hash hints. Call service-only `finalize_track_upload`. In one transaction it locks the track, rechecks status/expiry, locks the Storage metadata, and compares object ID/version/size/MIME.
+5. The per-user ready-hash unique index rejects duplicates with 409 / `DUPLICATE_TRACK`; rejected copies remain pending until safe cleanup. Commit `status = 'ready'`, `ready_at`, and null `upload_expires_at`; return the browser's ready-track contract.
 
 The database transition is atomic; the whole Storage upload is not a distributed
 transaction. Future deletion/cleanup must coordinate through the track state.
-Invalid files remain pending and count toward quota; cleanup is not implemented.
+Invalid files remain pending and count toward quota until the separately activated `cleanup-uploads` worker removes them after expiry plus grace.
 Existing ready tracks are not retrospectively verified. Structure checks are not
 full decoding or a guarantee of browser codec support.
 
@@ -47,3 +47,5 @@ Never expose the service-role key to the browser.
 [the test case inventory](../../../tests/README.md#edgefinalize-uploadtestts--verification-and-ready-transition).
 Tests use generated audio and mocked HTTP responses. SQL execution, RLS, locking,
 object replacement races, and actual playback still need integration checks.
+
+See [duplicate prevention](../../../docs/duplicate_prevention.md) for the required migration, rollout, and existing-track backfill.
