@@ -166,4 +166,51 @@ const counts = {
 - MIME type is MP3 or WAV.
 - Storage path exactly matches the owner, track ID, and extension.
 
-**F. Renew, remove, finish:** We call `renew_upload_cleanup` to extend the lease for the worker's task (skip the item if ownership is lost), remove the audio from Storage, and then call `finish_upload_cleanup`. 
+**F. Renew, remove, finish:** We call `renew_upload_cleanup` to extend the lease for the worker's task (skip the item if ownership is lost), remove the audio from Storage, and then call `finish_upload_cleanup`.
+
+---
+
+## Cleanup activation verification — November 10, 2026
+
+Project: sound-garden. The cleanup SQL migration is applied, the Edge Function
+is deployed, and the `sound-garden-upload-cleanup` cron job is active every
+15 minutes. pg_cron/pg_net are enabled. The job secret is configured in Edge
+secrets and Vault; no credential values are recorded here.
+
+### Local checks
+
+`npm run test:all`: 67 browser/database tests and 15 edge tests with 155 steps
+passed. An incomplete temporary Deno dependency cache was rebuilt; no application
+code needed changing.
+
+### Controlled hosted integration test
+
+Created five disposable track rows under the existing account, with generated
+PCM WAV files where appropriate. No signed upload tokens were issued for these
+fixtures, so historical expiry timestamps were safe to use in this test.
+
+| Case | Result |
+|---|---|
+| Pending, expired 20 minutes ago, file present | File and row deleted |
+| Pending, expired 20 minutes ago, file missing | Row deleted |
+| Pending, expired 5 minutes ago | File and row retained |
+| Pending, unexpired | File and row retained |
+| Ready control | File and row retained |
+| Missing/incorrect job secret | HTTP 401 |
+
+First invocation: claimed 2, deleted 2, failed 0, leaseLost 0, deferred 0.
+Second invocation: all counts 0. Remaining fixture files/rows were explicitly
+removed after verification. Original library IDs/statuses matched the baseline;
+the original ready track was untouched.
+
+### Scheduler path
+
+Manually invoked `public.invoke_upload_cleanup()` after Vault/schedule setup.
+The resulting pg_net HTTP response was 200 with all counts 0 and no network
+error. Verified cron job active with schedule `*/15 * * * *`. This verifies the
+dispatcher and configuration; it does not claim a timed cron firing was observed.
+
+Inspect `cron.job_run_details`, `net._http_response`, and Edge Function logs to
+monitor future runs. Partial failure counts still require attention. Orphan-file
+reconciliation and automatic retry of user-requested deletions remain outside
+this worker's scope.
