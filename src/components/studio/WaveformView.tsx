@@ -31,7 +31,7 @@ export function WaveformView({ readFrequencyBands, isPlaying }: Props) {
         // Quick attack follows percussion; a longer release prevents flicker.
         const response = target > heights[i] ? 45 : 160
         heights[i] += (target - heights[i]) * (1 - Math.exp(-delta / response))
-        const height = 2 + heights[i] * 310
+        const height = 2 + heights[i] * 478
         bars[i]?.setAttribute('y', String(300 - height / 2))
         bars[i]?.setAttribute('height', String(height))
       }
@@ -45,7 +45,7 @@ export function WaveformView({ readFrequencyBands, isPlaying }: Props) {
       <svg viewBox="0 0 1000 600" preserveAspectRatio="none" role="img" aria-label="Live music visualizer">
         <g ref={group} fill="#303a34">
           {EMPTY_BARS.map(i => <rect key={i} x={90 + (i + .5) / BAR_COUNT * 820 - 2.2}
-            y="299" width="4.4" height="2" rx="2.2" />)}
+            y="299" width="4.4" height="2" rx="2.2" ry="4.4" />)}
         </g>
       </svg>
     </div>

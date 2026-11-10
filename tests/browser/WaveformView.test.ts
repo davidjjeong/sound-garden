@@ -14,6 +14,8 @@ it('renders 96 compact rounded dark-green bars with no waveform curve or timelin
   render(createElement(WaveformView, { readFrequencyBands: () => null, isPlaying: false }))
   expect(bars()).toHaveLength(96)
   expect(bars()[0].parentElement?.getAttribute('fill')).toBe('#303a34')
+  expect(bars()[0].getAttribute('rx')).toBe('2.2')
+  expect(bars()[0].getAttribute('ry')).toBe('4.4')
   expect(height()).toBe(2)
   expect(screen.queryByRole('slider')).toBeNull()
   expect(screen.getByRole('img').querySelector('path')).toBeNull()
