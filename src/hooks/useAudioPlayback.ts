@@ -232,7 +232,10 @@ export function useAudioPlayback() {
   function readWaveForm(): Float32Array | null {
     return engine.current?.readWaveForm() ?? null
   }
-  return { ...state, select, play, pause, seek, setVolume, toggleMute, retry, beginDeletion, completeDeletion, readWaveForm }
+  function readFrequencyBands(): Float32Array | null {
+    return engine.current?.readFrequencyBands() ?? null
+  }
+  return { ...state, readFrequencyBands, select, play, pause, seek, setVolume, toggleMute, retry, beginDeletion, completeDeletion, readWaveForm }
 }
 
 export type AudioPlayback = ReturnType<typeof useAudioPlayback>

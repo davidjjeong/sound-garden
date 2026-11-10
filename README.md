@@ -1,6 +1,6 @@
 # Sound Garden
 
-A personal music library with planned real-time 3D waveforms and hand-gesture audio controls.
+A personal music library with private audio uploads, playback, and a live audio visualizer. Hand-gesture audio controls are planned.
 
 ## Local development
 
@@ -20,10 +20,12 @@ Configure Supabase Auth's site URL and allowed email confirmation redirects for 
 ## Current behavior
 
 - `/`: landing page with email/password signup and sign-in.
-- `/studio`: authenticated studio shell with a track-library empty state.
+- `/studio`: authenticated personal track library with uploads, search, deletion, and playback.
 - Shared header displays the signed-in email and supports signing out.
 - Session restoration finishes before protected routes are resolved.
-- Uploads, playback, waveform rendering, and hand controls are not implemented yet; their controls are disabled.
+- Uploads use reservation, signed transfer, and verification, with deduplication and expired-upload cleanup.
+- Playback supports seeking, volume, mute/restore, and 96 live dark-green visualizer bars.
+- Gesture controls are not implemented yet.
 
 ## Organization
 
@@ -37,12 +39,14 @@ Configure Supabase Auth's site URL and allowed email confirmation redirects for 
 ## Checks
 
 ```sh
+npm test
 npm run lint
 npm run build
+# Optional: npm run test:edge (requires the local Deno runtime)
 ```
 
 ## Deployment and authorization
 
 Configure your static host to rewrite application routes such as `/studio` to `index.html` so direct links and refreshes work. Serve over HTTPS for future camera access.
 
-Client-side route guards do not secure data. Before implementing the music library, configure database row-level security and private storage policies based on the authenticated user's ID.
+Client-side route guards do not secure data. Apply the repository's Supabase migrations, configure private storage and owner-based row-level security, and deploy the Edge Functions before using hosted uploads/deletion. See [test coverage](tests/README.md), [playback workflow](docs/playback_workflow.md), and [cleanup workflow](docs/cleanup_workflow.md) for details.

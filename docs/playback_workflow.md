@@ -112,3 +112,30 @@ keyboard release, or blur; buffering does not disable a timeline with known dura
 The speaker button mutes and restores the last nonzero volume, including across
 track switches. Only the bounded track list scrolls; row height/spacing stay stable.
 The isolated preview now includes 14 generated tracks to check overflow.
+
+
+## Live music visualizer
+
+`WaveformView` renders 96 rounded, centered dark-green SVG bars on a white
+background. These are live frequency levels, not a whole-track waveform or a
+seekable timeline. The player retains the seek control.
+
+1. The audio engine routes source → gain → analyser → speakers, so volume affects
+   both sound and visual levels. Its FFT size is 2048, with analyser smoothing 0.35.
+2. `readFrequencyBands()` reads decibels into a reusable buffer, converts them to
+   linear power, and returns RMS amplitude for 96 logarithmic bands from 40 Hz to
+   the lower of 16 kHz or Nyquist. Low bands can share FFT bins at this resolution;
+   the display does not imply 96 independently resolved frequencies.
+3. `useAudioPlayback` exposes the reader; `Studio` passes it and playback state to
+   the visualizer. No second player, download, or offline decoding is needed.
+4. On each animation frame, the visualizer blends neighboring bands (20/60/20%),
+   applies logarithmic display compression, then eases bar levels with a 45 ms
+   attack and 160 ms release. These are time constants, not fixed transition lengths.
+5. Bars expand symmetrically about the centerline, span 82% of the panel width,
+   and settle to small baseline marks on pause, silence, or missing data.
+6. SVG attributes update directly using reused level arrays, without per-frame
+   React state changes. Unmount cancels the animation frame. No WebGL is required.
+
+Automated tests cover structure, independent frequency response, decay, pause,
+missing data, buffer reuse, decibel conversion, and animation cleanup. Actual
+appearance, audio synchronization, and browser media behavior need browser review.

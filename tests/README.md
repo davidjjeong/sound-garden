@@ -188,13 +188,16 @@ codec/access verification still requires a signed-in browser.
 
 - `browser/audioEngine.test.ts`: source → gain → analyser → speakers connection,
   suspended/running context resume behavior and failures, volume clamping and
-  smoothing, invalid-volume rejection, reusable 2048-sample waveform buffer, and
-  disconnect/close order.
+  smoothing, invalid-volume rejection, reusable 2048-sample waveform buffer, reusable 96-band frequency output, decibel-to-amplitude conversion,
+  silent frequency data, and disconnect/close order.
 - Playback-hook tests now mock the engine independently of the media element.
   Volume assertions target gain and UI state; element volume remains at 1. Tests
   cover lazy creation, one engine across track switches, volume set before play,
   resume-before-play ordering, pause/deletion/unmount during pending resume,
   recoverable resume failure, waveform access, and disposal on unmount only.
-- Player component fixtures include `readWaveForm`; the Three.js renderer remains
-  outside these changes. Web Audio nodes are mocked, so audible output, real
-  autoplay rules, and cross-origin analyser samples require browser verification.
+- `browser/WaveformView.test.ts`: 96 centered rounded bars, dark-green styling,
+  independent frequency-region response, smooth rise/decay, SVG element reuse,
+  pause settling without more analyser reads, absent/empty spectrum data, and
+  animation cancellation on unmount. There is no timeline or continuous curve.
+- Web Audio nodes are mocked, so audible output, real autoplay rules, cross-origin
+  analyser samples, and visual quality require browser verification.

@@ -5,12 +5,14 @@ class FakeAudioContext {
   static instances: FakeAudioContext[] = []
   state = 'suspended'
   currentTime = 42
+  sampleRate = 48000
   destination = {}
   source = { connect: vi.fn(), disconnect: vi.fn() }
   gain = { connect: vi.fn(), disconnect: vi.fn(), gain: {
     cancelScheduledValues: vi.fn(), setTargetAtTime: vi.fn(),
   } }
-  analyser = { fftSize: 0, connect: vi.fn(), disconnect: vi.fn(),
+  analyser = { fftSize: 0, frequencyBinCount: 1024,
+    getFloatFrequencyData: vi.fn((bins: Float32Array) => { bins.fill(-20) }), connect: vi.fn(), disconnect: vi.fn(),
     getFloatTimeDomainData: vi.fn((samples: Float32Array) => { samples.fill(.25) }),
   }
   constructor() { FakeAudioContext.instances.push(this) }
@@ -83,4 +85,14 @@ it('disconnects each node before closing the context', async () => {
     expect(node.disconnect.mock.invocationCallOrder[0]).toBeLessThan(context.close.mock.invocationCallOrder[0])
   }
   expect(context.close).toHaveBeenCalledOnce()
+})
+
+it('returns reusable logarithmic bands in linear amplitude and maps silence to zero', () => {
+  const { engine, context } = setup()
+  const first = engine.readFrequencyBands()
+  expect(first).toHaveLength(96)
+  for (const value of first) expect(value).toBeCloseTo(.1)
+  context.analyser.getFloatFrequencyData.mockImplementationOnce(bins => bins.fill(-Infinity))
+  expect(engine.readFrequencyBands()).toBe(first)
+  for (const value of first) expect(value).toBe(0)
 })
