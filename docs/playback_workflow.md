@@ -1,8 +1,6 @@
-# Private track playback
+# Playback Workflow
 
-Studio now supports selection, play/pause, seeking, elapsed time/duration, volume,
-and deletion coordination. Waveforms and gestures remain placeholders. No database
-migration or new Edge Function is required.
+Supports track selection, play/pause, volume control, and elapsed time/duration display.
 
 ## Code map
 
