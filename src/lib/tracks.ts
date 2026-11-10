@@ -1,3 +1,4 @@
+import type { LibraryTrack, TrackPlaybackUrl } from '../types/tracks'
 import { hashAudioFile } from './contentHash'
 import { DuplicateTrackError } from './uploadErrors'
 import { FunctionsHttpError } from '@supabase/supabase-js'
@@ -6,15 +7,15 @@ import { supabase } from './supabase'
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024 // currently 20MB
 
-export async function getTracks() {
+export async function getTracks(): Promise<LibraryTrack[]> {
   const { data, error } = await supabase
     .from('tracks')
-    .select('id, title, size_bytes, created_at')
+    .select('id, title, storage_path, size_bytes, created_at')
     .eq('status', 'ready')
     .order('created_at', { ascending: false })
 
   if (error) throw error
-  return data
+  return data ?? []
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -221,4 +222,25 @@ export async function deleteTrack(trackId: string): Promise<string> {
     throw new Error('Could not confirm deletion. Retry deletion to check its status.')
   }
   return id
+}
+
+
+/** Sign on demand: never persist bearer URLs in the database or localStorage. */
+export async function getTrackPlaybackUrl(track: LibraryTrack): Promise<TrackPlaybackUrl> {
+  const owner = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+  if (!new RegExp(`^${owner}$`, 'i').test(track.id) ||
+    !new RegExp(`^${owner}/${track.id}\\.(mp3|wav)$`, 'i').test(track.storage_path)) {
+    throw new Error('This track has an invalid audio path.')
+  }
+  const lifetimeSeconds = 3600
+  const requestedAt = Date.now()
+  const { data, error } = await supabase.storage.from('audio')
+    .createSignedUrl(track.storage_path, lifetimeSeconds)
+  if (error || !data?.signedUrl) throw new Error('Could not load this track. Check your connection and retry playback.')
+  let url: URL
+  try { url = new URL(data.signedUrl) } catch { throw new Error('Could not load this track. Please retry playback.') }
+  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname))) {
+    throw new Error('Could not load this track. Please retry playback.')
+  }
+  return { url: url.href, expiresAt: requestedAt + lifetimeSeconds * 1000 }
 }

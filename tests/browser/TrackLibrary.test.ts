@@ -10,7 +10,7 @@ vi.mock('../../src/hooks/useTrackUpload', () => ({ useTrackUpload: () => ({
   startUpload: vi.fn(), retryUpload: vi.fn(), reset: vi.fn(),
 }) }))
 const id = '11111111-1111-4111-8111-111111111111'
-const song = { id, title: 'Soft Orbit', size_bytes: 2048, created_at: '2026-11-05' }
+const song = { id, storage_path: `22222222-2222-4222-8222-222222222222/${id}.wav`, title: 'Soft Orbit', size_bytes: 2048, created_at: '2026-11-05' }
 const get = vi.mocked(getTracks)
 const remove = vi.mocked(deleteTrack)
 beforeEach(() => {
@@ -90,4 +90,39 @@ describe('library deletion controls', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(remove.mock.calls).toEqual([[id], [id]])
   })
+})
+
+
+it('selects a track independently of the trash action and exposes selection', async () => {
+  const onSelectTrack = vi.fn()
+  render(createElement(TrackLibrary, { selectedTrackId: id, isPlaying: true, onSelectTrack }))
+  const select = await screen.findByRole('button', { name: 'Select Soft Orbit' })
+  expect(select.getAttribute('aria-pressed')).toBe('true')
+  fireEvent.click(select)
+  expect(onSelectTrack).toHaveBeenCalledWith(song)
+  fireEvent.click(screen.getByRole('button', { name: 'Delete Soft Orbit' }))
+  expect(onSelectTrack).toHaveBeenCalledTimes(1)
+  expect(remove).not.toHaveBeenCalled()
+})
+it('notifies playback on confirmation and only clears it after successful deletion', async () => {
+  const onDeleteStart = vi.fn()
+  const onTrackDeleted = vi.fn()
+  remove.mockRejectedValueOnce(new Error('Uncertain deletion'))
+  render(createElement(TrackLibrary, { onDeleteStart, onTrackDeleted }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Delete Soft Orbit' }))
+  expect(onDeleteStart).not.toHaveBeenCalled()
+  fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete track' }))
+  await screen.findByRole('alert')
+  expect(onDeleteStart).toHaveBeenCalledWith(id)
+  expect(onTrackDeleted).not.toHaveBeenCalled()
+  fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Retry deletion' }))
+  await waitFor(() => expect(onTrackDeleted).toHaveBeenCalledWith(id))
+})
+it('searching hides rows without changing the selected playback target', async () => {
+  const onSelectTrack = vi.fn()
+  render(createElement(TrackLibrary, { selectedTrackId: id, onSelectTrack }))
+  await screen.findByRole('button', { name: 'Select Soft Orbit' })
+  fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'not found' } })
+  expect(screen.queryByRole('button', { name: 'Select Soft Orbit' })).toBeNull()
+  expect(onSelectTrack).not.toHaveBeenCalled()
 })

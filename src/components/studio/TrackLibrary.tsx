@@ -5,14 +5,23 @@ import { useTrackDeletion } from '../../hooks/useTrackDeletion'
 import { DeleteTrackDialog, TrashIcon } from './DeleteTrackDialog'
 import { useTrackUpload } from '../../hooks/useTrackUpload'
 
-type Track = Awaited<ReturnType<typeof getTracks>>[number]
+import type { LibraryTrack } from '../../types/tracks'
 
-export function TrackLibrary() {
+type Props = {
+  selectedTrackId?: string | null
+  isPlaying?: boolean
+  isLoadingTrack?: boolean
+  onSelectTrack?: (track: LibraryTrack) => void
+  onDeleteStart?: (id: string) => void
+  onTrackDeleted?: (id: string) => void
+}
+
+export function TrackLibrary({ selectedTrackId, isPlaying, isLoadingTrack, onSelectTrack, onDeleteStart, onTrackDeleted }: Props) {
   const deletion = useTrackDeletion()
   const removedIds = useRef(new Set<string>())
   const [deleteMessage, setDeleteMessage] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-  const [tracks, setTracks] = useState<Track[]>([])
+  const [tracks, setTracks] = useState<LibraryTrack[]>([])
   const [loading, setLoading] = useState(true)
   const [libraryError, setLibraryError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
@@ -55,11 +64,13 @@ export function TrackLibrary() {
   }
 
   async function handleDelete() {
+    if (deletion.target) onDeleteStart?.(deletion.target.id)
     const id = await deletion.confirm()
     if (id) {
       removedIds.current.add(id)
       setTracks((current) => current.filter((track) => track.id !== id))
       setDeleteMessage('Track deleted.')
+      onTrackDeleted?.(id)
     }
   }
 
@@ -174,10 +185,22 @@ export function TrackLibrary() {
       ) : filteredTracks.length === 0 ? (
         <p>No tracks match your search.</p>
       ) : (
-        <ul className="track-list">
+        <ul className="track-list" aria-label="Tracks" tabIndex={0}>
           {filteredTracks.map((track) => (
-            <li className="track-row" key={track.id}>
-              <span>{track.title}</span>
+            <li className={`track-row${selectedTrackId === track.id ? ' track-row-selected' : ''}`} key={track.id}>
+              <button type="button" className="track-select" aria-label={`Select ${track.title}`}
+                aria-pressed={selectedTrackId === track.id} disabled={deletion.target?.id === track.id}
+                onClick={() => onSelectTrack?.(track)}>
+                <span className="track-indicator" aria-hidden="true">
+                  {selectedTrackId === track.id && isLoadingTrack ? <span className="delete-spinner" />
+                    : <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path d={selectedTrackId === track.id && isPlaying
+                        ? 'M7 5h4v14H7zM14 5h4v14h-4z'
+                        : 'M8 5.5 19 12 8 18.5V5.5Z'} />
+                    </svg>}
+                </span>
+                <span>{track.title}</span>
+              </button>
               <div className="track-row-actions">
                 <span className="track-size">{(track.size_bytes / 1024 / 1024).toFixed(1)} MB</span>
                 <button className="track-delete" type="button" aria-label={`Delete ${track.title}`}

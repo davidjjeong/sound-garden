@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { FunctionsHttpError } from '@supabase/supabase-js'
-import { deleteTrack, finalizeUpload, reserveUpload, uploadReservedFile } from '../../src/lib/tracks'
+import { deleteTrack, finalizeUpload, getTrackPlaybackUrl, reserveUpload, uploadReservedFile } from '../../src/lib/tracks'
 
-const mocks = vi.hoisted(() => ({ invoke: vi.fn(), from: vi.fn(), transfer: vi.fn() }))
+const mocks = vi.hoisted(() => ({ invoke: vi.fn(), from: vi.fn(), transfer: vi.fn(), sign: vi.fn() }))
 vi.mock('../../src/lib/supabase', () => ({
   supabase: { functions: { invoke: mocks.invoke }, storage: { from: mocks.from } },
 }))
@@ -15,7 +15,7 @@ const authorization = { bucket: 'audio', path, token: 'test-token' }
 const file = () => new File(['abc'], 'song.mp3', { type: 'application/octet-stream' })
 beforeEach(() => {
   vi.resetAllMocks()
-  mocks.from.mockReturnValue({ uploadToSignedUrl: mocks.transfer })
+  mocks.from.mockReturnValue({ uploadToSignedUrl: mocks.transfer, createSignedUrl: mocks.sign })
   mocks.transfer.mockResolvedValue({ error: null })
 })
 
@@ -143,5 +143,30 @@ describe('duplicate upload responses', () => {
   it.each(['reserve', 'finalize'])('maps %s duplicate rejection to a terminal typed error', async (stage) => {
     mocks.invoke.mockResolvedValue({ data: null, error: new FunctionsHttpError(new Response(JSON.stringify({ code: 'DUPLICATE_TRACK', error: 'duplicate' }), { status: 409 })) })
     await expect(stage === 'reserve' ? reserveUpload(file(), 'key') : finalizeUpload(id)).rejects.toMatchObject({ code: 'DUPLICATE_TRACK', message: 'This file is already in your library.' })
+  })
+})
+
+
+describe('private playback URLs', () => {
+  const selected = { id, title: 'Song', storage_path: path, size_bytes: 3, created_at: '2026-11-10' }
+  it('signs the private path for one hour and reports conservative expiry', async () => {
+    mocks.sign.mockResolvedValue({ data: { signedUrl: 'https://audio.example.test/song.mp3?token=test' }, error: null })
+    const now = Date.now()
+    const signed = await getTrackPlaybackUrl(selected)
+    expect(mocks.from).toHaveBeenCalledWith('audio')
+    expect(mocks.sign).toHaveBeenCalledWith(path, 3600)
+    expect(signed.expiresAt).toBeGreaterThanOrEqual(now + 3600000)
+  })
+  it.each(['../song.mp3', `${owner}/${owner}.mp3`, `${owner}/${id}.txt`])('rejects unexpected file paths: %s', async (storage_path) => {
+    await expect(getTrackPlaybackUrl({ ...selected, storage_path })).rejects.toThrow('invalid audio path')
+    expect(mocks.sign).not.toHaveBeenCalled()
+  })
+  it.each([
+    { data: null, error: new Error('Forbidden') },
+    { data: { signedUrl: '' }, error: null },
+    { data: { signedUrl: 'javascript:alert(1)' }, error: null },
+  ])('reports signing errors or invalid URLs without exposing tokens %#', async (response) => {
+    mocks.sign.mockResolvedValue(response)
+    await expect(getTrackPlaybackUrl(selected)).rejects.toThrow('Could not load')
   })
 })

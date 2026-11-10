@@ -170,3 +170,15 @@ limits are documented in [duplicate prevention](../docs/duplicate_prevention.md)
 - Scheduler setup is optional SQL under `supabase/schedules/`, not an enabled
   migration. pg_cron/pg_net/Vault and genuine multi-session SKIP LOCKED behavior
   require hosted verification. No live files are deleted by these tests.
+
+
+## Playback coverage
+
+See [playback workflow](../docs/playback_workflow.md) for architecture and the
+isolated real-browser preview command. `browser/useAudioPlayback.test.ts` covers
+media state, source signing/expiry, stale async work, autoplay/failure recovery,
+seek/volume, ended restart, deletion, and unmount. `browser/AudioPlayer.test.ts`
+covers accessible controls/disabled states/errors; library/helper tests cover
+selection, deletion callbacks, private-path signing, and malformed URLs.
+The preview uses generated silent audio and no hosted data; personal-library
+codec/access verification still requires a signed-in browser.

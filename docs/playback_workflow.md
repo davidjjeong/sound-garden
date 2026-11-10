@@ -1,0 +1,116 @@
+# Private track playback
+
+Studio now supports selection, play/pause, seeking, elapsed time/duration, volume,
+and deletion coordination. Waveforms and gestures remain placeholders. No database
+migration or new Edge Function is required.
+
+## Code map
+
+| File | Responsibility |
+|---|---|
+| `src/types/tracks.ts` | Shared library-track and expiring-playback-URL types |
+| `src/lib/tracks.ts` | Read ready tracks with Storage paths; sign private audio URLs |
+| `src/hooks/useAudioPlayback.ts` | Own one audio element, media events, URL lifecycle, and deletion guards |
+| `Studio.tsx` | Connect the library, hook, and presentational player |
+| `TrackLibrary.tsx` | Selectable rows, selected/playing indicators, deletion callbacks |
+| `AudioPlayer.tsx` | Render accessible playback, seek, volume, loading, and retry controls |
+
+## Selection and loading
+
+1. The ready-only library query includes `storage_path`. Selecting a row passes its
+   full track to the hook; searching filters the list without changing playback.
+2. Selection immediately pauses/releases the previous source and resets the timeline.
+3. The helper validates owner/track UUID path shape and calls Storage's
+   `createSignedUrl(path, 3600)` using the existing signed-in Supabase client.
+   This grants a temporary bearer URL, not a public bucket or a service-role client.
+4. The hook loads the URL into its persistent HTML audio element and attempts play.
+   Supabase's owner-folder SELECT policy controls signing. The hosted policy was
+   inspected read-only and matches authenticated user IDs to the first folder.
+5. A generation counter invalidates older async URL/play responses after switching,
+   deletion, or unmount. Clicking the selected row toggles play/pause without signing/reloading a fresh source; an expired URL or playback error uses the existing refresh/retry path.
+
+URLs live only in memory. Do not log them or store them in database/localStorage.
+Signing records expiry from request start (conservative) and allows only HTTPS,
+except HTTP localhost addresses for development.
+
+## Media state and controls
+
+The hook registers/removes media listeners in one effect. `loadedmetadata` and
+`durationchange` set duration and restore a saved seek position; `timeupdate`
+updates the slider; `playing`, `pause`, `waiting`, `canplay`, `ended`, and `error`
+update actual playback state. A resolved play request alone does not mark playing.
+
+Seek is clamped to finite duration; volume is clamped to 0–1 and retained across
+track switches. Ended tracks stay selected and restart at zero on Play. Shuffle,
+repeat, previous, and next remain explicitly disabled. Volume support follows the
+browser's HTML media capabilities; this stage does not use Web Audio processing.
+
+If autoplay is denied, show “Press Play to start audio” with an enabled Play button.
+Signing/network/format failures offer explicit Retry playback; there is no automatic
+retry loop. Before resuming, a URL within 30 seconds of expiry is refreshed and the
+position restored after new metadata. Explicit retry also requests a fresh URL.
+No proactive timer interrupts an already-playing track at URL expiry; a subsequent
+fetch/seek error may need Retry playback.
+
+## Deletion
+
+Opening/canceling confirmation does not affect playback. Confirmation reports the
+ID before starting deletion: active playback and any pending signing are stopped,
+and that ID is blocked from resuming. Other tracks continue normally. On success,
+selection/source/time are cleared only if that same track is still selected.
+
+On uncertain deletion failure the active track stays stopped/unavailable, and the
+existing deletion UI retains its retry target. It is unsafe to assume the server
+left the file intact. Another track can still be selected. This is an extension
+of the existing deletion callbacks, not a second deletion implementation.
+
+## Tests
+
+`npm run test:all` runs the existing suites plus:
+
+- `useAudioPlayback.test.ts`: persistent element, switching/stale responses, same-ID
+  reuse, metadata/time, seek/volume bounds, pause/resume, URL expiry/restoration,
+  autoplay denial, signing/media failure recovery, ended restart, deletion races,
+  unmount cleanup, old rejected play promises, and pause during signing.
+- `AudioPlayer.test.ts`: rendered title/time, accessible sliders/buttons, disabled
+  unsupported controls, no-selection state, error retry, and deletion blocking.
+- `TrackLibrary.test.ts`: selection separate from trash, search preserving selection,
+  deletion-start callbacks, success-only clearing, and existing confirmation tests.
+- `tracks.test.ts`: one-hour signing, conservative expiry, path validation, errors,
+  and invalid/unexpected URL protocols.
+
+Media API behavior is mocked in unit tests. Actual personal-file codecs, network
+failures, and access isolation need signed-in checks in the real app.
+
+## Isolated browser preview
+
+```sh
+npx vite --config tests/preview/vite.config.ts
+```
+
+Open `http://127.0.0.1:5181/`. This test-only root renders the real Studio/components
+with an isolated Supabase adapter and generated 20-second silent PCM WAVs. It has
+no Supabase connection, credentials, or access to user music. Production Vite config
+and auth routes are untouched; no mock/preview code is imported by `src/`.
+
+Browser verification passed for real WAV loading/duration, play/pause, seek to
+0:08, volume at 35%, and switching/resetting tracks. The personal app tabs were
+signed out, so playback against the user's actual library was not claimed as
+verified. Tests do not simulate a new public bucket or bypass production auth.
+
+## Try it in your app
+
+Start the normal Vite server, sign in, select a track, and verify play/pause, seek,
+volume, and deletion of a disposable selected track. If signing fails, inspect the
+Storage SELECT policy/session. No backend deployment is needed for this change.
+
+
+## Player interaction refinements
+
+Artwork is solid dark green with no decorative strokes. Timeline and volume use
+borderless custom range tracks/thumbs with keyboard focus indicators. Timeline
+movement previews a local position and commits one seek on pointer release,
+keyboard release, or blur; buffering does not disable a timeline with known duration.
+The speaker button mutes and restores the last nonzero volume, including across
+track switches. Only the bounded track list scrolls; row height/spacing stay stable.
+The isolated preview now includes 14 generated tracks to check overflow.

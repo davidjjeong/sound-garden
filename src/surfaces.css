@@ -15,8 +15,8 @@ body { background: #f7f7f8; }
 .hero p { color: var(--muted); font-size: 16px; }
 .hero-actions { gap: 12px; }
 button:not(.wave-artwork) { border-radius: 12px; transition: background-color 180ms,border-color 180ms,box-shadow 180ms,transform 180ms var(--ease),color 180ms; }
-button:not(:disabled):not(.wave-artwork):not(.track-delete):hover { transform: translateY(-1px); }
-button:not(:disabled):not(.wave-artwork):not(.track-delete):active { transform: translateY(1px); }
+button:not(:disabled):not(.wave-artwork):not(.track-delete):not(.track-select):not(.player-mute):hover { transform: translateY(-1px); }
+button:not(:disabled):not(.wave-artwork):not(.track-delete):not(.track-select):not(.player-mute):active { transform: translateY(1px); }
 button:focus-visible,a:focus-visible { outline: 2px solid #527a62; outline-offset: 4px; }
 button:disabled { cursor: not-allowed; }
 .hero-actions button,.account button,.session-status button,.gesture-toolbar button,.library-player button {
@@ -80,9 +80,8 @@ button:disabled { cursor: not-allowed; }
 .player-summary { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
 .player-artwork {
   flex: 0 0 76px; width: 76px; height: 76px; border-radius: 18px; overflow: hidden;
-  background: radial-gradient(ellipse at 5% 0%,#9ce9d4,transparent 70%),radial-gradient(ellipse at 100% 5%,#dbb8f2,transparent 70%),radial-gradient(ellipse at 10% 100%,#ffd6be,transparent 70%),#f2d2e9;
+  background: #303a34;
 }
-.player-artwork svg { display: block; width: 100%; height: 100%; }
 .player-track-info { min-width: 0; }
 .player-track-info h2 { margin: 0; color: #35343d; font-size: 20px; font-weight: 650; letter-spacing: -.6px; line-height: 1.3; }
 .player-track-info p { margin: 6px 0 0; color: #85868a; font-size: 13px; line-height: 1.5; }

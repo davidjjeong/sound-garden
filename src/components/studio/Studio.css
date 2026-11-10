@@ -88,3 +88,44 @@
 .delete-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: delete-spin .8s linear infinite; }
 @keyframes delete-spin { to { transform: rotate(360deg); } }
 @media(prefers-reduced-motion:reduce) { .delete-spinner { animation: none; } .track-delete, .delete-dialog button { transition: none; } }
+
+/* Track selection and private playback share the existing neutral/green palette. */
+.studio-layout .track-row { padding: 8px 10px; gap: 12px; }
+.studio-layout .track-row-selected { background: #edf3ef; border-color: #d9e5dc; }
+.studio-layout .track-select { min-width: 0; flex: 1; display: flex; align-items: center; gap: 12px; padding: 10px 0; border: 0; border-radius: 8px; text-align: left; background: transparent; color: inherit; font: inherit; font-weight: 550; }
+.track-select > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.studio-layout .track-select:hover:not(:disabled) { color: #365c43; }
+.track-indicator { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; color: #567761; line-height: 1; }
+.track-indicator svg { display: block; width: 19px; height: 19px; }
+.track-select:focus-visible, .player-seek:focus-visible, .player-volume input:focus-visible { outline: 2px solid #89a995; outline-offset: 4px; }
+.player-seek, .player-volume input { display: block; min-width: 0; width: 100%; margin: 0; accent-color: #303a34; cursor: pointer; }
+.player-seek { height: 20px; }
+.player-seek:disabled { cursor: default; opacity: .45; }
+.player-volume { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 20px; color: #737b77; font-size: 12px; }
+.player-volume input { flex: 0 1 150px; }
+.player-times { font-variant-numeric: tabular-nums; }
+.player-status { margin: 12px 0 0; color: #597161; font-size: 12px; line-height: 1.6; }
+.player-status:empty { display: none; }
+.studio-layout .player-track-info { min-width: 0; }
+.studio-layout .player-track-info h2 { overflow-wrap: anywhere; }
+
+
+/* Keep row sizes stable and scroll only the library list. */
+.studio-layout .track-list { flex: 0 1 auto; min-height: 0; max-height: clamp(180px, 35svh, 360px); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; display: flex; flex-direction: column; gap: 4px; padding-right: 4px; }
+.studio-layout .track-row { flex-shrink: 0; min-height: 60px; }
+.track-list:focus-visible { outline: 2px solid #89a995; outline-offset: 4px; border-radius: 10px; }
+.player-seek, .player-volume input { touch-action: pan-y; }
+.player-volume { gap: 6px; }
+.player-mute { display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; padding: 6px; border: 0; border-radius: 8px; color: #68776d; background: transparent; }
+.player-mute svg { display: block; width: 20px; height: 20px; }
+.player-mute:hover { color: #303a34; background: #edf3ef; }
+.player-mute:focus-visible { outline: 2px solid #89a995; outline-offset: 2px; }
+
+
+/* Explicit range styling avoids browser-specific borders and bevels. */
+.studio-layout .player-seek, .studio-layout .player-volume input { appearance: none; -webkit-appearance: none; height: 20px; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+.player-seek::-webkit-slider-runnable-track, .player-volume input::-webkit-slider-runnable-track { height: 4px; border: 0; border-radius: 4px; box-shadow: none; background: linear-gradient(to right, #303a34 var(--range-progress, 0%), #e2e8e4 var(--range-progress, 0%)); }
+.player-seek::-webkit-slider-thumb, .player-volume input::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 12px; height: 12px; margin-top: -4px; border: 0; border-radius: 50%; background: #303a34; box-shadow: none; }
+.player-seek::-moz-range-track, .player-volume input::-moz-range-track { height: 4px; border: 0; border-radius: 4px; background: #e2e8e4; }
+.player-seek::-moz-range-progress, .player-volume input::-moz-range-progress { height: 4px; border-radius: 4px; background: #303a34; }
+.player-seek::-moz-range-thumb, .player-volume input::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: #303a34; box-shadow: none; }
