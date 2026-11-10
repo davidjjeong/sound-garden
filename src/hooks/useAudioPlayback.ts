@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { getTrackPlaybackUrl } from '../lib/tracks'
+import { createAudioEngine, type AudioEngine } from '../lib/audioEngine'
 import type { LibraryTrack, TrackPlaybackUrl } from '../types/tracks'
 
 const initial = {
@@ -20,6 +21,8 @@ export function useAudioPlayback() {
   const blockedIds = useRef(new Set<string>())
   const mounted = useRef(false)
   const lastAudibleVolume = useRef(1)
+  const engine = useRef<AudioEngine | null>(null)
+  const volumeRef = useRef(1)
 
   useEffect(() => {
     mounted.current = true
@@ -80,6 +83,13 @@ export function useAudioPlayback() {
       element.removeAttribute('src')
       element.load()
       audio.current = null
+
+      const currentEngine = engine.current
+      engine.current = null
+
+      if(currentEngine) {
+        void currentEngine.dispose().catch(() => {}) // browser may already be closing context
+      }
     }
   }, [])
 
@@ -96,6 +106,18 @@ export function useAudioPlayback() {
     const element = audio.current
     if (!element) return
     try {
+      if(!engine.current) { // create audio engine, keeps tied to playback interaction
+        engine.current = createAudioEngine(element)
+        engine.current.setVolume(volumeRef.current)
+      }
+      await engine.current.resume()
+
+      if( // prevents playback if user switched tracks or began deletion while resume() was pending
+        !mounted.current ||
+        version !== generation.current ||
+        !wantsPlay.current
+      ) return
+
       await element.play()
       // Playback promises may settle after a pause/deletion/track switch.
       if (version === generation.current && !wantsPlay.current) element.pause()
@@ -175,13 +197,13 @@ export function useAudioPlayback() {
   function setVolume(value: number) {
     if (!Number.isFinite(value)) return
     const volume = Math.max(0, Math.min(value, 1))
+    volumeRef.current = volume
     if (volume > 0) lastAudibleVolume.current = volume
-    if (audio.current) audio.current.volume = volume
+    engine.current?.setVolume(volume)
     setState((previous) => ({ ...previous, volume }))
   }
   function toggleMute() {
-    const volume = audio.current?.volume ?? state.volume
-    setVolume(volume > 0 ? 0 : lastAudibleVolume.current)
+    setVolume(volumeRef.current > 0 ? 0 : lastAudibleVolume.current)
   }
   function retry() {
     const track = selected.current
@@ -207,7 +229,10 @@ export function useAudioPlayback() {
     releaseSource()
     setState((previous) => ({ ...initial, volume: previous.volume }))
   }
-  return { ...state, select, play, pause, seek, setVolume, toggleMute, retry, beginDeletion, completeDeletion }
+  function readWaveForm(): Float32Array | null {
+    return engine.current?.readWaveForm() ?? null
+  }
+  return { ...state, select, play, pause, seek, setVolume, toggleMute, retry, beginDeletion, completeDeletion, readWaveForm }
 }
 
 export type AudioPlayback = ReturnType<typeof useAudioPlayback>

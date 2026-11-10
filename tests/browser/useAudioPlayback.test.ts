@@ -1,8 +1,17 @@
+import { createAudioEngine, type AudioEngine } from '../../src/lib/audioEngine'
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAudioPlayback } from '../../src/hooks/useAudioPlayback'
 import { getTrackPlaybackUrl } from '../../src/lib/tracks'
 import type { LibraryTrack } from '../../src/types/tracks'
+
+const engineMock = vi.hoisted(() => ({
+  resume: vi.fn<() => Promise<void>>(),
+  setVolume: vi.fn<(volume: number) => void>(),
+  readWaveForm: vi.fn<AudioEngine['readWaveForm']>(),
+  dispose: vi.fn<() => Promise<void>>(),
+}))
+vi.mock('../../src/lib/audioEngine', () => ({ createAudioEngine: vi.fn() }))
 
 vi.mock('../../src/lib/tracks', () => ({ getTrackPlaybackUrl: vi.fn() }))
 const sign = vi.mocked(getTrackPlaybackUrl)
@@ -23,6 +32,10 @@ class FakeAudio extends EventTarget {
 }
 beforeEach(() => {
   vi.resetAllMocks()
+  engineMock.resume.mockResolvedValue(undefined)
+  engineMock.dispose.mockResolvedValue(undefined)
+  engineMock.readWaveForm.mockReturnValue(new Float32Array(2048))
+  vi.mocked(createAudioEngine).mockReturnValue(engineMock)
   instances.length = 0
   vi.stubGlobal('Audio', FakeAudio)
   sign.mockImplementation(async (item) => ({ url: `https://audio.test/${item.id}.wav`, expiresAt: Date.now() + 3600000 }))
@@ -69,11 +82,11 @@ it('updates duration/time from media events and clamps seeks/volume', async () =
   act(() => result.current.seek(-10))
   expect(media.currentTime).toBe(0)
   act(() => result.current.setVolume(.4))
-  expect(media.volume).toBe(.4)
+  expect(engineMock.setVolume).toHaveBeenLastCalledWith(.4)
   act(() => result.current.setVolume(9))
-  expect(media.volume).toBe(1)
+  expect(engineMock.setVolume).toHaveBeenLastCalledWith(1)
   act(() => result.current.setVolume(-1))
-  expect(media.volume).toBe(0)
+  expect(engineMock.setVolume).toHaveBeenLastCalledWith(0)
 })
 it('ignores invalid seeks before metadata and nonfinite values', async () => {
   const { result, media } = await select()
@@ -177,7 +190,7 @@ it('ignores a rejected old play promise after switching tracks', async () => {
   let reject!: (reason: Error) => void
   act(() => result.current.pause())
   media.play.mockImplementationOnce(() => new Promise((_resolve, fail) => { reject = fail }))
-  act(() => result.current.play())
+  await act(async () => { result.current.play() })
   await act(async () => { result.current.select(other) })
   await act(async () => { reject(new Error('Old playback interrupted')) })
   expect(result.current.track?.id).toBe(other.id)
@@ -203,18 +216,18 @@ it('an ended track with an expired URL restarts at the beginning', async () => {
 })
 
 it('mute restores the last nonzero volume and preserves it across track switches', async () => {
-  const { result, media } = await select()
+  const { result } = await select()
   act(() => result.current.setVolume(.35))
   act(() => result.current.toggleMute())
-  expect(media.volume).toBe(0)
+  expect(engineMock.setVolume).toHaveBeenLastCalledWith(0)
   await act(async () => { result.current.select(other) })
   expect(result.current.volume).toBe(0)
   act(() => result.current.toggleMute())
-  expect(media.volume).toBe(.35)
+  expect(engineMock.setVolume).toHaveBeenLastCalledWith(.35)
   expect(result.current.volume).toBe(.35)
   act(() => result.current.setVolume(0))
   act(() => result.current.toggleMute())
-  expect(media.volume).toBe(.35)
+  expect(engineMock.setVolume).toHaveBeenLastCalledWith(.35)
 })
 
 
@@ -236,4 +249,53 @@ it('clicking the selected row during signing cancels delayed autoplay', async ()
   expect(instances[0].play).not.toHaveBeenCalled()
   await act(async () => { result.current.select(track) })
   expect(result.current.isPlaying).toBe(true)
+})
+
+
+it('creates the engine lazily and reuses it across pauses and track switches', async () => {
+  const { result } = renderHook(() => useAudioPlayback())
+  expect(createAudioEngine).not.toHaveBeenCalled()
+  expect(result.current.readWaveForm()).toBeNull()
+  act(() => result.current.setVolume(.3))
+  await act(async () => { result.current.select(track) })
+  expect(createAudioEngine).toHaveBeenCalledWith(instances[0])
+  expect(engineMock.setVolume).toHaveBeenLastCalledWith(.3)
+  expect(instances[0].volume).toBe(1)
+  act(() => result.current.pause())
+  await act(async () => { result.current.play(); result.current.select(other) })
+  expect(createAudioEngine).toHaveBeenCalledOnce()
+  expect(engineMock.dispose).not.toHaveBeenCalled()
+  expect(result.current.readWaveForm()).toBe(engineMock.readWaveForm.mock.results[0].value)
+})
+it('resumes the audio context before requesting element playback', async () => {
+  const { media } = await select()
+  expect(engineMock.resume.mock.invocationCallOrder[0]).toBeLessThan(media.play.mock.invocationCallOrder[0])
+})
+it.each(['pause', 'deletion', 'unmount'])('does not start audio after %s during context resume', async (action) => {
+  let resume!: () => void
+  engineMock.resume.mockReturnValueOnce(new Promise((resolve) => { resume = resolve }))
+  const { result, unmount } = renderHook(() => useAudioPlayback())
+  await act(async () => { result.current.select(track) })
+  expect(engineMock.resume).toHaveBeenCalledOnce()
+  if (action === 'unmount') unmount()
+  else act(() => action === 'pause' ? result.current.pause() : result.current.beginDeletion(track.id))
+  await act(async () => { resume() })
+  expect(instances[0].play).not.toHaveBeenCalled()
+})
+it('shows a recoverable error when resuming the context fails', async () => {
+  engineMock.resume.mockRejectedValueOnce(new Error('Context unavailable'))
+  const { result, media } = await select()
+  expect(result.current.error).toMatch(/Playback could not start/)
+  expect(media.play).not.toHaveBeenCalled()
+  await act(async () => { result.current.retry() })
+  expect(result.current.isPlaying).toBe(true)
+  expect(createAudioEngine).toHaveBeenCalledOnce()
+})
+it('disposes the engine only on unmount and handles rejected cleanup', async () => {
+  engineMock.dispose.mockRejectedValueOnce(new Error('Already closed'))
+  const { result, unmount } = await select()
+  await act(async () => { result.current.select(other) })
+  expect(engineMock.dispose).not.toHaveBeenCalled()
+  await act(async () => { unmount() })
+  expect(engineMock.dispose).toHaveBeenCalledOnce()
 })
