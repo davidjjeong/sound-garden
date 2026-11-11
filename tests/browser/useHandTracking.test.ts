@@ -12,7 +12,7 @@ class FakeWorker {
   send(data: unknown) { this.onmessage?.({ data } as MessageEvent) }
 }
 beforeEach(() => { FakeWorker.instances = []; vi.stubGlobal('Worker', FakeWorker) })
-afterEach(() => { cleanup(); vi.unstubAllGlobals() })
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
 it('does not start a worker until the camera is enabled', () => {
   const { result } = renderHook(() => useHandTracking(false))
   expect(result.current.status).toBe('idle')
@@ -103,4 +103,53 @@ it('closes a bitmap whose capture completes after disabling', async () => {
   await act(async () => resolve({ close }))
   expect(close).toHaveBeenCalledOnce()
   expect(worker.postMessage).toHaveBeenCalledTimes(1)
+})
+
+it('clears landmarks while hidden and rejects in-flight results after returning', async () => {
+  let hidden = false
+  vi.spyOn(document, 'hidden', 'get').mockImplementation(() => hidden)
+  let tick: FrameRequestCallback = () => {}
+  vi.stubGlobal('requestAnimationFrame', vi.fn(callback => { tick = callback; return 1 }))
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  const capture = vi.fn().mockResolvedValue({ close: vi.fn() })
+  vi.stubGlobal('createImageBitmap', capture)
+  const video = { readyState: 4, videoWidth: 640, currentTime: 1 } as HTMLVideoElement
+  const ref = { current: video }
+  const { result } = renderHook(() => useHandTracking(true, ref))
+  await waitFor(() => expect(FakeWorker.instances).toHaveLength(1))
+  const worker = FakeWorker.instances[0]
+  act(() => worker.send({ type: 'ready' }))
+  await act(async () => tick(100))
+  hidden = true
+  act(() => document.dispatchEvent(new Event('visibilitychange')))
+  expect(result.current.landmarks).toEqual([])
+  video.currentTime = 2
+  await act(async () => tick(160))
+  expect(capture).toHaveBeenCalledOnce()
+  hidden = false
+  act(() => document.dispatchEvent(new Event('visibilitychange')))
+  act(() => worker.send({ type: 'result', landmarks: [[{ x: 1, y: 1, z: 0 }]] }))
+  expect(result.current.landmarks).toEqual([])
+  await act(async () => tick(220))
+  expect(capture).toHaveBeenCalledTimes(2)
+  act(() => worker.send({ type: 'result', landmarks: [[{ x: .5, y: .5, z: 0 }]] }))
+  expect(result.current.landmarks[0][0].x).toBe(.5)
+})
+it('handles bitmap capture failure without leaving an inference loop running', async () => {
+  let tick: FrameRequestCallback = () => {}
+  vi.stubGlobal('requestAnimationFrame', vi.fn(callback => { tick = callback; return 1 }))
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  const capture = vi.fn().mockRejectedValue(new Error('capture failed'))
+  vi.stubGlobal('createImageBitmap', capture)
+  const ref = { current: { readyState: 4, videoWidth: 640, currentTime: 1 } as HTMLVideoElement }
+  const { result } = renderHook(() => useHandTracking(true, ref))
+  await waitFor(() => expect(FakeWorker.instances).toHaveLength(1))
+  const worker = FakeWorker.instances[0]
+  act(() => worker.send({ type: 'ready' }))
+  await act(async () => tick(100))
+  expect(result.current.status).toBe('error')
+  expect(result.current.landmarks).toEqual([])
+  expect(worker.terminate).toHaveBeenCalled()
+  act(() => tick(200))
+  expect(capture).toHaveBeenCalledOnce()
 })

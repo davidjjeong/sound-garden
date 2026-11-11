@@ -15,18 +15,33 @@ export function useHandTracking(enabled: boolean, videoRef?: RefObject<HTMLVideo
     let lastTime = -Infinity
     let lastVideoTime = -1
     let failed = false
+    let visibilityEpoch = 0
+    let sentEpoch = 0
+    const visibilityChanged = () => {
+      visibilityEpoch++
+      lastVideoTime = -1
+      lastTime = -Infinity
+      if (active && !failed) setState(previous => ({ ...previous, landmarks: [] }))
+    }
+    document.addEventListener('visibilitychange', visibilityChanged)
     function capture(timestamp: number) {
       if (!active || failed) return
       scheduled = requestAnimationFrame(capture)
       const video = videoRef?.current
-      if (!ready || busy || !video || video.readyState < 2 || !video.videoWidth ||
+      if (document.hidden || !ready || busy || !video || video.readyState < 2 || !video.videoWidth ||
           timestamp - lastTime < 50 || video.currentTime === lastVideoTime) return
       busy = true
       lastTime = timestamp
       lastVideoTime = video.currentTime
+      const captureEpoch = visibilityEpoch
       void createImageBitmap(video).then(frame => {
-        if (!active || failed) { frame.close(); return }
+        if (!active || failed || document.hidden || captureEpoch !== visibilityEpoch) {
+          frame.close()
+          busy = false
+          return
+        }
         try {
+          sentEpoch = captureEpoch
           worker!.postMessage({ type: 'frame', frame, timestamp } satisfies HandTrackingRequest, [frame])
         } catch {
           frame.close()
@@ -53,7 +68,9 @@ export function useHandTracking(enabled: boolean, videoRef?: RefObject<HTMLVideo
           if (message.type === 'error') fail(message.message)
           else if (message.type === 'result') {
             busy = false
-            setState({ status: 'ready', error: '', landmarks: message.landmarks })
+            if (!document.hidden && sentEpoch === visibilityEpoch) {
+              setState({ status: 'ready', error: '', landmarks: message.landmarks })
+            }
           } else if (message.type === 'loading'  || message.type === 'ready') {
             setState({ status: message.type, error: '', landmarks: [] })
             if (message.type === 'ready' && !ready) {
@@ -76,6 +93,7 @@ export function useHandTracking(enabled: boolean, videoRef?: RefObject<HTMLVideo
     })
     return () => {
       active = false
+      document.removeEventListener('visibilitychange', visibilityChanged)
       cancelAnimationFrame(scheduled)
       if (worker) {
         worker.onmessage = null

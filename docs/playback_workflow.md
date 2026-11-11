@@ -207,3 +207,19 @@ shows the current percentage and pinch/movement instructions. Idle feedback is
 only during volume adjustment, palm holds, or release-to-rearm. Playback status
 has no confirmation timer and does not optimistically change when a toggle is
 requested. This presentation does not change recognition thresholds or playback.
+
+
+## Camera interruption lifecycle
+
+`useCamera` keeps one resource record for generation IDs, pending startup, stream,
+attached video, and track listeners. Stop/unmount invalidate pending work, detach
+listeners, stop tracks, and clear `srcObject`. Canceling permits a new startup;
+a late old request cannot replace the new stream or clear its pending flag.
+A camera track's `ended` event disables tracking and shows reconnect instructions.
+
+Tracking listens for document visibility changes. Hidden tabs stop capturing;
+landmarks are cleared so gesture grabs/holds reset. An epoch fences asynchronous
+capture and inference results across visibility changes. A still-running inference
+keeps the one-frame-in-flight lock until its response arrives, but stale results
+are discarded. Returning to the tab processes fresh frames. The camera itself
+remains enabled until the user disables it or leaves the studio.

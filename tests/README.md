@@ -253,3 +253,31 @@ refresh existing tabs if a worker fails with `504 Outdated Optimize Dep`.
 landmarks, scaling/rotation, 600 ms holds, one trigger per hold, pose/hand-loss
 rearming, duplicate frames, inference gaps, playback unavailable/loading, camera
 disable, progress feedback, and hook toggle dispatch without volume changes.
+
+
+## Camera and tracking interruption coverage
+
+`browser/useCamera.test.ts` uses mocked streams and checks video-only requests,
+stop/unmount cleanup (tracks and video attachment), duplicate-start suppression,
+late permission results after unmount/cancel, restart while an old permission
+request is pending, denied permission/retry, preview playback failure, disconnect
+and reconnect, repeated enable/disable, and late preview playback after stop.
+
+Tracking tests also check hidden-tab capture suspension, clearing landmarks on
+visibility changes, rejecting results from before a tab switch, recovery on fresh
+frames, and capture failure terminating the inference loop. The camera can remain
+active while the tab is hidden; gesture input is cleared and inference is paused.
+
+### Real-device verification still needed
+
+1. Enable/disable the camera repeatedly; verify the camera indicator turns off.
+2. Leave `/studio` while enabled; verify camera resources are released.
+3. Switch tabs during a pinch or partial palm hold. Return without an unexpected
+   volume change or playback toggle; a fresh pinch starts from the current volume.
+4. Disconnect/revoke an active camera; expect a disconnected message. Reconnect
+   and enable again to recover. OS/browser prompt behavior is not simulated.
+5. Deny permission, then allow it through the browser and retry. Test recognition
+   under different lighting and on a slower device.
+
+Automated tests mock camera/worker resources; they do not prove physical camera
+indicator behavior, OS permissions, or recognition quality on real hardware.
