@@ -201,3 +201,17 @@ codec/access verification still requires a signed-in browser.
   animation cancellation on unmount. There is no timeline or continuous curve.
 - Web Audio nodes are mocked, so audible output, real autoplay rules, cross-origin
   analyser samples, and visual quality require browser verification.
+
+
+## Hand-tracking initialization browser check
+
+Start the normal app with `npm run dev`, then open
+`/tests/preview/handTrackingCheck.html` on that dev server. The page starts the
+real worker without camera access and should display `loading` followed by
+`ready`. It loads the local WASM runtime and hand model; it does not run hand
+inference. Closing the page terminates its worker.
+
+The app and isolated playback preview use separate Vite cache directories to
+avoid stale optimized-dependency URLs when both servers run. After installing
+MediaPipe or changing Vite configuration, restart the development server and
+refresh existing tabs if a worker fails with `504 Outdated Optimize Dep`.

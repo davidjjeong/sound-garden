@@ -1,48 +1,32 @@
 /// <reference lib="webworker" />
+import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision'
+import type { HandTrackingRequest, HandTrackingResponse } from '../types/handTracking'
 
-import {
-  FilesetResolver,
-  HandLandmarker,
-} from '@mediapipe/tasks-vision'
+let initialization: Promise<HandLandmarker> | null = null
+const worker = self as unknown as DedicatedWorkerGlobalScope
+const reply = (message: HandTrackingResponse) => worker.postMessage(message)
 
-let landmarker: HandLandmarker | null = null
-let initialization: Promise<void> | null = null
-
-async function initialize() {
-  const vision = await FilesetResolver.forVisionTasks(
-    '/mediapipe/wasm',
-  )
-
-  landmarker = await HandLandmarker.createFromOptions(vision, {
-    baseOptions: {
-      modelAssetPath: '/mediapipe/hand_landmarker.task',
-      delegate: 'CPU',
-    },
+async function initialize(assetBase: string) {
+  const vision = await FilesetResolver.forVisionTasks(`${assetBase}wasm`, true)
+  return HandLandmarker.createFromOptions(vision, {
+    baseOptions: { modelAssetPath: `${assetBase}hand_landmarker.task`, delegate: 'CPU' },
     runningMode: 'VIDEO',
     numHands: 1,
-    minHandDetectionConfidence: 0.6,
-    minHandPresenceConfidence: 0.6,
-    minTrackingConfidence: 0.6,
+    minHandDetectionConfidence: .6,
+    minHandPresenceConfidence: .6,
+    minTrackingConfidence: .6,
   })
 }
 
-self.onmessage = async (event: MessageEvent<{ type: 'initialize' }>) => {
+worker.onmessage = async (event: MessageEvent<HandTrackingRequest>) => {
   if (event.data.type !== 'initialize') return
-
+  reply({ type: 'loading' })
   try {
-    initialization ??= initialize()
+    initialization ??= initialize(event.data.assetBase)
     await initialization
-
-    self.postMessage({ type: 'ready' })
+    reply({ type: 'ready' })
   } catch (error) {
     initialization = null
-
-    self.postMessage({
-      type: 'error',
-      message:
-        error instanceof Error
-          ? error.message
-          : 'Could not initialize hand tracking.',
-    })
+    reply({ type: 'error', message: error instanceof Error ? error.message : 'Could not initialize hand tracking.' })
   }
 }

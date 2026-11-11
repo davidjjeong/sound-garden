@@ -14,6 +14,7 @@ header.writeUInt16LE(16, 34); header.write('data', 36); header.writeUInt32LE(sam
 const wav = Buffer.concat([header, samples])
 
 export default defineConfig({
+  cacheDir: fileURLToPath(new URL('../../node_modules/.vite-preview', import.meta.url)),
   root: fileURLToPath(new URL('./', import.meta.url)),
   plugins: [react(), {
     name: 'isolated-playback-fixtures',
