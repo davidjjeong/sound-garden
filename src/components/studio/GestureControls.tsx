@@ -15,6 +15,9 @@ type Props = { volume: number; manualVolumeRevision: number; onVolumeChange: (vo
 export function GestureControls({ volume, manualVolumeRevision, onVolumeChange, canTogglePlayback = false, isPlaying = false, onTogglePlayback }: Props) {
   const { videoRef, enabled, error, start, stop } = useCamera()
   const tracking = useHandTracking(enabled, videoRef)
+  const [hasSeenHand, setHasSeenHand] = useState(false)
+  if (!enabled && hasSeenHand) setHasSeenHand(false)
+  if (enabled && tracking.landmarks.length > 0 && !hasSeenHand) setHasSeenHand(true)
   const controls = useHandControls({ enabled: enabled && tracking.status === 'ready',
     landmarks: tracking.landmarks, volume, manualVolumeRevision, onVolumeChange, canTogglePlayback, onTogglePlayback })
   const floating = useRef<HTMLDivElement>(null)
@@ -33,7 +36,7 @@ export function GestureControls({ volume, manualVolumeRevision, onVolumeChange, 
     return () => window.removeEventListener('resize', resize)
   }, [])
   const status = tracking.status === 'ready'
-    ? tracking.landmarks.length ? 'Hand detected' : 'No hand detected'
+    ? tracking.landmarks.length ? 'Hand detected' : hasSeenHand ? 'Hand lost — bring it back into view' : 'No hand detected'
     : tracking.status === 'error' ? 'Hand tracking unavailable' : 'Loading hand model…'
   return <div className="camera-controls">
     <button type="button" onClick={enabled ? stop : start}>
@@ -84,18 +87,35 @@ export function GestureControls({ volume, manualVolumeRevision, onVolumeChange, 
           </g>)}
         </svg>
       </div>
-      <div className="camera-status">
-        {enabled && <p role="status">{status}</p>}
-        {enabled && tracking.status === 'ready' && <p className="pinch-status">
-          {controls.mode === 'dragging' ? `Adjusting volume · ${Math.round(volume * 100)}%`
-            : controls.mode === 'waitingForRelease' ? 'Release your pinch to grab again' : 'Pinch to adjust volume'}
-        </p>}
-        {enabled && tracking.status === 'ready' && canTogglePlayback && <div className="palm-hold-status">
-          <p>{controls.palmLatched ? 'Lower or change your hand to rearm'
-            : `Hold an open palm to ${isPlaying ? 'pause' : 'play'}`}</p>
-          <progress aria-label="Open palm hold progress" max="1" value={controls.palmProgress} />
-        </div>}
-        {tracking.error && <p role="alert">{tracking.error}</p>}
+      <div className="camera-status camera-guide">
+        <div className="camera-detection" data-detected={tracking.landmarks.length > 0}>
+          <span className="camera-detection-dot" aria-hidden="true" />
+          {enabled && <p role="status">{status}</p>}
+        </div>
+        <div className="gesture-guide-row" data-active={controls.mode === 'dragging'}>
+          <div><strong>Volume</strong><span>Pinch + move up / down</span></div>
+          <span className="gesture-guide-value">{Math.round(volume * 100)}%</span>
+        </div>
+        <div className="gesture-guide-row" data-active={controls.palmProgress > 0 || controls.palmLatched}
+          data-unavailable={!canTogglePlayback}>
+          <div><strong>Play / pause</strong><span>{canTogglePlayback ? 'Open palm · hold for 0.6s' : 'Select a track first'}</span></div>
+          <span className="gesture-guide-value" aria-label="Playback status">{isPlaying ? 'Playing' : canTogglePlayback ? 'Paused' : '—'}</span>
+        </div>
+        <div className="gesture-feedback">
+          {enabled && tracking.status === 'ready' && <p className="gesture-feedback-text" aria-live="polite">
+            {controls.mode === 'dragging' ? `Adjusting volume · ${Math.round(volume * 100)}%`
+              : controls.mode === 'waitingForRelease' ? 'Release your pinch to grab again'
+              : controls.palmLatched ? 'Lower or change your hand to rearm'
+              : controls.palmProgress > 0 ? `Keep holding to ${isPlaying ? 'pause' : 'play'}`
+              : 'Ready for gestures'}
+          </p>}
+          <div className="palm-hold-status">
+            <progress aria-label="Open palm hold progress" max="1" value={enabled ? controls.palmProgress : 0} />
+          </div>
+        </div>
+        <div className="gesture-error" aria-live="polite">
+          {tracking.error && <p role="alert">{tracking.error}</p>}
+        </div>
       </div>
     </div>, document.body)}
   </div>

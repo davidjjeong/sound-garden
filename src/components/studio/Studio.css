@@ -179,3 +179,23 @@
   .palm-hold-status progress::-webkit-progress-value { transition: none; }
   .palm-hold-status progress::-moz-progress-bar { transition: none; }
 }
+
+/* Stable guide rows keep the floating preview calm as detection changes. */
+.camera-guide { height: 210px; display: grid; grid-template-rows: 32px 45px 45px 38px 1fr; padding: 10px 12px; gap: 3px; }
+.camera-detection { display: flex; gap: 7px; align-items: center; min-width: 0; }
+.camera-detection p { font-size: 11px; line-height: 1.3; }
+.camera-detection-dot { width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: #a9b2ac; }
+.camera-detection[data-detected="true"] .camera-detection-dot { background: #467553; }
+.gesture-guide-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border: 1px solid transparent; border-radius: 9px; background: #f7f9f7; transition: background-color 140ms, border-color 140ms; }
+.gesture-guide-row[data-active="true"] { background: #e8f1eb; border-color: #c9ddcf; }
+.gesture-guide-row[data-unavailable="true"] { opacity: .55; }
+.gesture-guide-row strong { display: block; font: 600 11px/1.4 Inter, sans-serif; }
+.gesture-guide-row div > span { display: block; color: #76857b; font: 10px/1.4 Inter, sans-serif; }
+.gesture-guide-value { font: 600 11px/1.4 Inter, sans-serif; color: #496353; font-variant-numeric: tabular-nums; }
+.gesture-feedback { padding: 3px 2px 0; }
+.gesture-feedback .gesture-feedback-text { height: 19px; font-size: 10px; white-space: nowrap; }
+.gesture-feedback .palm-hold-status { margin-top: 0; }
+.gesture-feedback progress { margin-top: 3px; }
+.gesture-error { overflow: auto; min-height: 0; }
+.gesture-error p { font-size: 10px; }
+@media (prefers-reduced-motion: reduce) { .gesture-guide-row { transition: none; } }

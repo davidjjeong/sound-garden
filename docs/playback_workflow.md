@@ -191,3 +191,19 @@ An autoplay-blocked `play()` still uses the player's existing manual-play notice
 Tests use synthetic landmarks to check pose rejection, scale/orientation, hold
 boundaries, one-shot firing, interrupted/stale results, playback eligibility, and
 hook callback integration. Real-camera pose tolerance and comfort require testing.
+
+
+## Gesture guide and feedback
+
+The floating camera preview keeps a fixed-height guide below the video with volume
+and play/pause instructions. Active gestures are highlighted; play/pause guidance
+is dimmed when no track is eligible. Detection feedback distinguishes initial hand
+search from hand loss and resets when the camera is disabled.
+
+The play/pause row persistently shows the actual player state, independently of
+hand activity. Its instruction reads “Open palm · hold for 0.6s”; the volume row
+shows the current percentage and pinch/movement instructions. Idle feedback is
+“Ready for gestures”, giving neither gesture priority in the UI. Feedback changes
+only during volume adjustment, palm holds, or release-to-rearm. Playback status
+has no confirmation timer and does not optimistically change when a toggle is
+requested. This presentation does not change recognition thresholds or playback.
