@@ -144,3 +144,27 @@
 
 /* Keep the live bars below the heading, including at maximum amplitude. */
 .live-visualizer { box-sizing: border-box; padding-top: 88px; }
+
+.hand-preview { position: relative; width: 240px; max-width: 100%; overflow: hidden; border-radius: 12px; transform: scaleX(-1); }
+.hand-preview video { display: block; width: 100%; height: auto; }
+.hand-preview svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+/* Camera controls are out of flow; detection never resizes the studio grid. */
+.studio-layout .waveform-panel { position: relative; }
+.camera-controls { position: absolute; top: 24px; right: 24px; z-index: 2; }
+.camera-controls > button { border: 1px solid #dbe5de; border-radius: 10px; background: #edf3ef; color: #303a34; padding: 9px 13px; font: inherit; font-size: 12px; font-weight: 600; transition: background-color 160ms; }
+.camera-controls > button:hover { background: #dfeae3; }
+.camera-controls > button:focus-visible, .camera-drag-handle:focus-visible, .camera-close:focus-visible { outline: 2px solid #89a995; outline-offset: 3px; }
+.camera-error { position: absolute; top: 38px; right: 0; width: 220px; padding: 10px; border: 1px solid #e0e6e2; border-radius: 10px; background: #fff; font-size: 12px; }
+.floating-camera { position: fixed; right: 24px; bottom: 24px; z-index: 1000; width: min(280px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); overflow: auto; border: 1px solid #dbe5de; border-radius: 16px; background: #fff; color: #303a34; box-shadow: 0 12px 40px #20372b26; }
+.floating-camera[hidden] { display: none; }
+.camera-drag-header { display: flex; align-items: center; padding: 8px 10px; gap: 8px; }
+.camera-drag-handle { display: flex; align-items: center; gap: 8px; flex: 1; padding: 4px; cursor: grab; touch-action: none; user-select: none; font-size: 13px; font-weight: 600; border-radius: 6px; }
+.camera-drag-handle:active { cursor: grabbing; }
+.camera-close { border: 0; border-radius: 7px; width: 28px; height: 28px; background: transparent; color: #52685b; cursor: pointer; font-size: 22px; line-height: 1; }
+.camera-close:hover { background: #edf3ef; }
+.floating-camera .hand-preview { width: 100%; border-radius: 0; }
+.camera-status { min-height: 42px; padding: 10px 14px; box-sizing: border-box; }
+.camera-status p { margin: 0; font: 12px/1.6 Inter, sans-serif; }
+.camera-status p[role="alert"] { max-height: 64px; overflow: auto; overflow-wrap: anywhere; }
+@media(max-width:480px) { .camera-controls { top: 20px; right: 16px; } .studio-layout .waveform-copy p { max-width: 135px; } }

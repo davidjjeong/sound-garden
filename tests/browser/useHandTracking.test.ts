@@ -56,3 +56,51 @@ it('reports an unsupported worker constructor', async () => {
   await waitFor(() => expect(result.current.status).toBe('error'))
   expect(result.current.error).toContain('unavailable')
 })
+
+it('allows one frame in flight, waits for new video frames, and stops on disable', async () => {
+  let tick: FrameRequestCallback = () => {}
+  vi.stubGlobal('requestAnimationFrame', vi.fn(callback => { tick = callback; return 1 }))
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  const bitmap = { close: vi.fn() }
+  const capture = vi.fn().mockResolvedValue(bitmap)
+  vi.stubGlobal('createImageBitmap', capture)
+  const video = { readyState: 4, videoWidth: 640, currentTime: 1 } as HTMLVideoElement
+  const ref = { current: video }
+  const { result, rerender } = renderHook(({ enabled }) => useHandTracking(enabled, ref), { initialProps: { enabled: true } })
+  await waitFor(() => expect(FakeWorker.instances).toHaveLength(1))
+  const worker = FakeWorker.instances[0]
+  act(() => worker.send({ type: 'ready' }))
+  await act(async () => tick(100))
+  expect(capture).toHaveBeenCalledOnce()
+  act(() => { tick(160); tick(220) })
+  expect(capture).toHaveBeenCalledOnce()
+  act(() => worker.send({ type: 'result', landmarks: [[{ x: .2, y: .3, z: 0 }]] }))
+  expect(result.current.landmarks).toHaveLength(1)
+  act(() => tick(280))
+  expect(capture).toHaveBeenCalledOnce()
+  video.currentTime = 2
+  await act(async () => tick(340))
+  expect(capture).toHaveBeenCalledTimes(2)
+  rerender({ enabled: false })
+  act(() => tick(400))
+  expect(capture).toHaveBeenCalledTimes(2)
+  expect(result.current.landmarks).toEqual([])
+})
+it('closes a bitmap whose capture completes after disabling', async () => {
+  let tick: FrameRequestCallback = () => {}
+  vi.stubGlobal('requestAnimationFrame', vi.fn(callback => { tick = callback; return 1 }))
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  let resolve!: (frame: { close: () => void }) => void
+  vi.stubGlobal('createImageBitmap', vi.fn(() => new Promise(done => { resolve = done })))
+  const ref = { current: { readyState: 4, videoWidth: 640, currentTime: 1 } as HTMLVideoElement }
+  const { rerender } = renderHook(({ enabled }) => useHandTracking(enabled, ref), { initialProps: { enabled: true } })
+  await waitFor(() => expect(FakeWorker.instances).toHaveLength(1))
+  const worker = FakeWorker.instances[0]
+  act(() => worker.send({ type: 'ready' }))
+  act(() => tick(100))
+  rerender({ enabled: false })
+  const close = vi.fn()
+  await act(async () => resolve({ close }))
+  expect(close).toHaveBeenCalledOnce()
+  expect(worker.postMessage).toHaveBeenCalledTimes(1)
+})

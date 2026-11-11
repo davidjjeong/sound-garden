@@ -1,31 +1,65 @@
-import { useEffect, useState } from 'react'
-import type { HandTrackingRequest, HandTrackingResponse } from '../types/handTracking'
+import { useEffect, useState, type RefObject } from 'react'
+import type { HandPoint, HandTrackingRequest, HandTrackingResponse } from '../types/handTracking'
 
-type TrackingState = { status: 'idle' | 'loading' | 'ready' | 'error'; error: string }
+type TrackingState = { status: 'idle' | 'loading' | 'ready' | 'error'; error: string; landmarks: HandPoint[][] }
 
-export function useHandTracking(enabled: boolean) {
-  const [state, setState] = useState<TrackingState>({ status: 'idle', error: '' })
+export function useHandTracking(enabled: boolean, videoRef?: RefObject<HTMLVideoElement | null>) {
+  const [state, setState] = useState<TrackingState>({ status: 'idle', error: '', landmarks: [] })
   useEffect(() => {
     if (!enabled) return
     let active = true
     let worker: Worker | undefined
+    let scheduled = 0
+    let ready = false
+    let busy = false
+    let lastTime = -Infinity
+    let lastVideoTime = -1
+    let failed = false
+    function capture(timestamp: number) {
+      if (!active || failed) return
+      scheduled = requestAnimationFrame(capture)
+      const video = videoRef?.current
+      if (!ready || busy || !video || video.readyState < 2 || !video.videoWidth ||
+          timestamp - lastTime < 50 || video.currentTime === lastVideoTime) return
+      busy = true
+      lastTime = timestamp
+      lastVideoTime = video.currentTime
+      void createImageBitmap(video).then(frame => {
+        if (!active || failed) { frame.close(); return }
+        try {
+          worker!.postMessage({ type: 'frame', frame, timestamp } satisfies HandTrackingRequest, [frame])
+        } catch {
+          frame.close()
+          fail('Could not send a camera frame for hand tracking.')
+        }
+      }).catch(() => fail('Could not capture a camera frame for hand tracking.'))
+    }
     const fail = (message: string) => {
       if (!active) return
+      failed = true
+      cancelAnimationFrame(scheduled)
       worker?.terminate()
-      setState({ status: 'error', error: message })
+      setState({ status: 'error', error: message, landmarks: [] })
     }
     // Report startup asynchronously, including Worker-constructor failures.
     queueMicrotask(() => {
       if (!active) return
-      setState({ status: 'loading', error: '' })
+      setState({ status: 'loading', error: '', landmarks: [] })
       try {
         worker = new Worker(new URL('../workers/handTracking.worker.ts', import.meta.url), { type: 'module' })
         worker.onmessage = (event: MessageEvent<HandTrackingResponse>) => {
-          if (!active) return
+          if (!active || failed) return
           const message = event.data
           if (message.type === 'error') fail(message.message)
-          else if (message.type === 'loading' || message.type === 'ready') {
-            setState({ status: message.type, error: '' })
+          else if (message.type === 'result') {
+            busy = false
+            setState({ status: 'ready', error: '', landmarks: message.landmarks })
+          } else if (message.type === 'loading'  || message.type === 'ready') {
+            setState({ status: message.type, error: '', landmarks: [] })
+            if (message.type === 'ready' && !ready) {
+              ready = true
+              if (videoRef) scheduled = requestAnimationFrame(capture)
+            }
           }
         }
         worker.onerror = event => {
@@ -42,6 +76,7 @@ export function useHandTracking(enabled: boolean) {
     })
     return () => {
       active = false
+      cancelAnimationFrame(scheduled)
       if (worker) {
         worker.onmessage = null
         worker.onerror = null
@@ -49,6 +84,6 @@ export function useHandTracking(enabled: boolean) {
         worker.terminate()
       }
     }
-  }, [enabled])
-  return enabled ? state : { status: 'idle' as const, error: '' }
+  }, [enabled, videoRef])
+  return enabled ? state : { status: 'idle' as const, error: '', landmarks: [] }
 }

@@ -19,10 +19,23 @@ async function initialize(assetBase: string) {
 }
 
 worker.onmessage = async (event: MessageEvent<HandTrackingRequest>) => {
-  if (event.data.type !== 'initialize') return
+  const message = event.data
+  if (message.type === 'frame') {
+    try {
+      if (!initialization) throw new Error('Hand tracking is not initialized.')
+      const landmarker = await initialization
+      const result = landmarker.detectForVideo(message.frame, message.timestamp)
+      reply({ type: 'result', landmarks: result.landmarks })
+    } catch (error) {
+      reply({ type: 'error', message: error instanceof Error ? error.message : 'Hand detection failed.' })
+    } finally {
+      message.frame.close()
+    }
+    return
+  }
   reply({ type: 'loading' })
   try {
-    initialization ??= initialize(event.data.assetBase)
+    initialization ??= initialize(message.assetBase)
     await initialization
     reply({ type: 'ready' })
   } catch (error) {

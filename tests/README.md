@@ -208,10 +208,27 @@ codec/access verification still requires a signed-in browser.
 Start the normal app with `npm run dev`, then open
 `/tests/preview/handTrackingCheck.html` on that dev server. The page starts the
 real worker without camera access and should display `loading` followed by
-`ready`. It loads the local WASM runtime and hand model; it does not run hand
-inference. Closing the page terminates its worker.
+`ready`, then a `result` with empty landmarks for a generated blank image. It
+loads the local WASM runtime and hand model and runs one real inference without
+camera access. Closing the page terminates its worker.
 
 The app and isolated playback preview use separate Vite cache directories to
 avoid stale optimized-dependency URLs when both servers run. After installing
 MediaPipe or changing Vite configuration, restart the development server and
 refresh existing tabs if a worker fails with `504 Outdated Optimize Dep`.
+
+
+## Live hand tracking
+
+- `useHandTracking.test.ts`: worker startup/errors, disable/restart, stale messages,
+  one frame in flight, unchanged-video-frame skipping, result delivery, and closing
+  a bitmap captured after disable.
+- `handTrackingWorker.test.ts`: module-compatible WASM initialization, one-time
+  model loading, initialization retry, inference results/errors, and bitmap closure
+  on both successful and failed inference.
+- The live preview mirrors video and landmarks together and preserves the video's
+  intrinsic aspect ratio. Inference is capped at 20 frames/second; actual throughput
+  depends on the device. No camera frames are sent to a server.
+- Test real hands in the studio to verify overlay alignment, hand loss/reacquisition,
+  lighting, and camera disable/navigation cleanup. Gesture-to-music controls are
+  not implemented yet.
