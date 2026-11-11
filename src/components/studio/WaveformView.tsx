@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 const BAR_COUNT = 96
+const VISUAL_GAIN = 8 // Display sensitivity only; does not change audio gain.
 const EMPTY_BARS = Array.from({ length: BAR_COUNT }, (_, i) => i)
 type Props = { readFrequencyBands: () => Float32Array | null; isPlaying: boolean }
 
@@ -27,7 +28,7 @@ export function WaveformView({ readFrequencyBands, isPlaying }: Props) {
       for (let i = 0; i < BAR_COUNT; i++) {
         // Neighbor blending softens the outline, preserving independent bar motion.
         const level = levelAt(i - 1) * .2 + levelAt(i) * .6 + levelAt(i + 1) * .2
-        const target = Math.min(1, Math.log1p(Math.max(0, level) * 35) / Math.log(36))
+        const target = Math.min(1, Math.log1p(Math.max(0, level) * VISUAL_GAIN * 35) / Math.log(36))
         // Quick attack follows percussion; a longer release prevents flicker.
         const response = target > heights[i] ? 45 : 160
         heights[i] += (target - heights[i]) * (1 - Math.exp(-delta / response))

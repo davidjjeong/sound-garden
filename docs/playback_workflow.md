@@ -129,10 +129,13 @@ seekable timeline. The player retains the seek control.
 3. `useAudioPlayback` exposes the reader; `Studio` passes it and playback state to
    the visualizer. No second player, download, or offline decoding is needed.
 4. On each animation frame, the visualizer blends neighboring bands (20/60/20%),
-   applies logarithmic display compression, then eases bar levels with a 45 ms
+   applies 8× visual-only sensitivity and logarithmic display compression, then
+   eases bar levels with a 45 ms
    attack and 160 ms release. These are time constants, not fixed transition lengths.
 5. Bars expand symmetrically about the centerline, span 82% of the panel width,
    and settle to small baseline marks on pause, silence, or missing data.
+   Peak height is capped at 80% of the SVG drawing area, below reserved heading
+   space. Visual sensitivity changes neither playback gain nor analyser data.
 6. SVG attributes update directly using reused level arrays, without per-frame
    React state changes. Unmount cancels the animation frame. No WebGL is required.
 
