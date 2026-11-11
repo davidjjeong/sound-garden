@@ -168,3 +168,26 @@ midpoint/dead-zone mapping, and stateful interaction controller.
 The preview displays instructions, live volume percentage during a grab, or a
 release-to-rearm message after manual override. Webcam testing is still needed
 to tune pinch thresholds, dead zone, and sensitivity for comfort.
+
+
+## Open-palm play/pause
+
+`detectOpenPalm` checks all 21 finite landmarks, four extended fingers (joint
+alignment and fingertip distance from the wrist), an extended thumb, and separation
+between thumb/index. This is a heuristic over MediaPipe landmarks, not a newly
+trained gesture classifier.
+
+`createPalmHoldController` requires 600 ms of fresh open-palm results and emits one
+trigger per hold. It resets incomplete holds after hand loss, pose change, disable,
+or a detection gap over 250 ms. Identical result objects cannot advance progress.
+After firing it stays latched until the pose changes or hand leaves; temporary
+player loading does not rearm it. Pinch-volume modes block palm toggles.
+
+Studio enables toggling only for a selected, available track outside loading and
+routes the action to the existing `play()`/`pause()` methods. The floating preview
+shows a hold-progress bar, action instructions, and release-to-rearm feedback.
+An autoplay-blocked `play()` still uses the player's existing manual-play notice.
+
+Tests use synthetic landmarks to check pose rejection, scale/orientation, hold
+boundaries, one-shot firing, interrupted/stale results, playback eligibility, and
+hook callback integration. Real-camera pose tolerance and comfort require testing.

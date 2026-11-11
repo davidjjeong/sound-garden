@@ -17,7 +17,10 @@ export function Studio() {
       </section>
       <section className="waveform-panel" aria-labelledby="waveform-title">
         <GestureControls volume={playback.volume} manualVolumeRevision={playback.manualVolumeRevision}
-          onVolumeChange={playback.setGestureVolume} />
+          onVolumeChange={playback.setGestureVolume}
+          canTogglePlayback={Boolean(playback.track) && !playback.isLoading && !playback.isUnavailable}
+          isPlaying={playback.isPlaying}
+          onTogglePlayback={() => { if (playback.isPlaying) playback.pause(); else playback.play() }} />
         <WaveformView
           readFrequencyBands={playback.readFrequencyBands}
           isPlaying={playback.isPlaying}

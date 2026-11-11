@@ -1,6 +1,6 @@
 # Sound Garden
 
-A personal music library with private audio uploads, playback, and a live audio visualizer. Hand-gesture audio controls are planned.
+A personal music library with private audio uploads, playback, and a live audio visualizer. Hand gestures control volume and play/pause.
 
 ## Local development
 
@@ -25,7 +25,7 @@ Configure Supabase Auth's site URL and allowed email confirmation redirects for 
 - Session restoration finishes before protected routes are resolved.
 - Uploads use reservation, signed transfer, and verification, with deduplication and expired-upload cleanup.
 - Playback supports seeking, volume, mute/restore, and 96 live dark-green visualizer bars.
-- Gesture controls are not implemented yet.
+- Optional camera hand tracking supports pinch-and-drag volume and a 600 ms open-palm hold to play/pause.
 
 ## Organization
 

@@ -10,13 +10,13 @@ const CONNECTIONS = [
   [15, 16], [13, 17], [0, 17], [17, 18], [18, 19], [19, 20],
 ]
 
-type Props = { volume: number; manualVolumeRevision: number; onVolumeChange: (volume: number) => void }
+type Props = { volume: number; manualVolumeRevision: number; onVolumeChange: (volume: number) => void; canTogglePlayback?: boolean; isPlaying?: boolean; onTogglePlayback?: () => void }
 
-export function GestureControls({ volume, manualVolumeRevision, onVolumeChange }: Props) {
+export function GestureControls({ volume, manualVolumeRevision, onVolumeChange, canTogglePlayback = false, isPlaying = false, onTogglePlayback }: Props) {
   const { videoRef, enabled, error, start, stop } = useCamera()
   const tracking = useHandTracking(enabled, videoRef)
   const controls = useHandControls({ enabled: enabled && tracking.status === 'ready',
-    landmarks: tracking.landmarks, volume, manualVolumeRevision, onVolumeChange })
+    landmarks: tracking.landmarks, volume, manualVolumeRevision, onVolumeChange, canTogglePlayback, onTogglePlayback })
   const floating = useRef<HTMLDivElement>(null)
   const drag = useRef<{ id: number; x: number; y: number } | null>(null)
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null)
@@ -90,6 +90,11 @@ export function GestureControls({ volume, manualVolumeRevision, onVolumeChange }
           {controls.mode === 'dragging' ? `Adjusting volume · ${Math.round(volume * 100)}%`
             : controls.mode === 'waitingForRelease' ? 'Release your pinch to grab again' : 'Pinch to adjust volume'}
         </p>}
+        {enabled && tracking.status === 'ready' && canTogglePlayback && <div className="palm-hold-status">
+          <p>{controls.palmLatched ? 'Lower or change your hand to rearm'
+            : `Hold an open palm to ${isPlaying ? 'pause' : 'play'}`}</p>
+          <progress aria-label="Open palm hold progress" max="1" value={controls.palmProgress} />
+        </div>}
         {tracking.error && <p role="alert">{tracking.error}</p>}
       </div>
     </div>, document.body)}

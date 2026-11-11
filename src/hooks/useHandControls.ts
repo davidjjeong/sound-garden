@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
-import { createHandVolumeController, type HandControlMode } from '../lib/gestures'
+import { createPalmHoldController, createHandVolumeController, type HandControlMode } from '../lib/gestures'
 import type { HandPoint } from '../types/handTracking'
 
 type Options = {
@@ -8,14 +8,19 @@ type Options = {
   volume: number
   manualVolumeRevision: number
   onVolumeChange: (volume: number) => void
+  canTogglePlayback?: boolean
+  onTogglePlayback?: () => void
 }
 
-export function useHandControls({ enabled, landmarks, volume, manualVolumeRevision, onVolumeChange }: Options) {
+export function useHandControls({ enabled, landmarks, volume, manualVolumeRevision, onVolumeChange, canTogglePlayback = false, onTogglePlayback }: Options) {
   const controller = useRef<ReturnType<typeof createHandVolumeController> | null>(null)
+  const palm = useRef<ReturnType<typeof createPalmHoldController> | null>(null)
+  const [palmState, setPalmState] = useState({ progress: 0, latched: false })
   const [mode, setMode] = useState<HandControlMode>('idle')
-  const inputs = useEffectEvent(() => ({ volume, onVolumeChange }))
+  const inputs = useEffectEvent(() => ({ volume, onVolumeChange, onTogglePlayback }))
   useEffect(() => {
     controller.current ??= createHandVolumeController()
+    palm.current ??= createPalmHoldController()
     const current = inputs()
     const result = controller.current.update({
       hand: landmarks[0], enabled, volume: current.volume,
@@ -24,6 +29,10 @@ export function useHandControls({ enabled, landmarks, volume, manualVolumeRevisi
     // External landmark results drive interaction state; volume renders do not replay frames.
     setMode(result.mode)
     if (result.volume !== undefined) current.onVolumeChange(result.volume)
-  }, [enabled, landmarks, manualVolumeRevision])
-  return { mode: enabled ? mode : 'idle' }
+    const hold = palm.current.update(landmarks[0], enabled,
+      canTogglePlayback && result.mode === 'idle', performance.now())
+    setPalmState({ progress: hold.progress, latched: hold.latched })
+    if (hold.trigger) current.onTogglePlayback?.()
+  }, [enabled, landmarks, manualVolumeRevision, canTogglePlayback])
+  return { mode: enabled ? mode : 'idle', palmProgress: enabled ? palmState.progress : 0, palmLatched: enabled && palmState.latched }
 }

@@ -230,7 +230,7 @@ refresh existing tabs if a worker fails with `504 Outdated Optimize Dep`.
   intrinsic aspect ratio. Inference is capped at 20 frames/second; actual throughput
   depends on the device. No camera frames are sent to a server.
 - Test real hands in the studio to verify overlay alignment, hand loss/reacquisition,
-  lighting, and camera disable/navigation cleanup. Pinch-and-drag volume is implemented; play/pause gestures are not.
+  lighting, and camera disable/navigation cleanup. Pinch-and-drag volume is implemented; open-palm play/pause is also implemented.
 
 
 ## Pinch volume control coverage
@@ -245,3 +245,11 @@ refresh existing tabs if a worker fails with `504 Outdated Optimize Dep`.
   preview tests cover status text and reset on camera disable/hand loss.
 - Real-camera recognition and subjective movement latency require manual testing;
   automated tests use synthetic landmarks and mocked media resources.
+
+
+## Open-palm playback coverage
+
+`browser/palmGesture.test.ts` covers extended versus bent/pinched hands, invalid
+landmarks, scaling/rotation, 600 ms holds, one trigger per hold, pose/hand-loss
+rearming, duplicate frames, inference gaps, playback unavailable/loading, camera
+disable, progress feedback, and hook toggle dispatch without volume changes.
