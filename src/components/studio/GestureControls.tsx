@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useHandTracking } from '../../hooks/useHandTracking'
 import { useCamera } from '../../hooks/useCamera'
+import { useHandControls } from '../../hooks/useHandControls'
 
 const CONNECTIONS = [
   [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8],
@@ -9,9 +10,13 @@ const CONNECTIONS = [
   [15, 16], [13, 17], [0, 17], [17, 18], [18, 19], [19, 20],
 ]
 
-export function GestureControls() {
+type Props = { volume: number; manualVolumeRevision: number; onVolumeChange: (volume: number) => void }
+
+export function GestureControls({ volume, manualVolumeRevision, onVolumeChange }: Props) {
   const { videoRef, enabled, error, start, stop } = useCamera()
   const tracking = useHandTracking(enabled, videoRef)
+  const controls = useHandControls({ enabled: enabled && tracking.status === 'ready',
+    landmarks: tracking.landmarks, volume, manualVolumeRevision, onVolumeChange })
   const floating = useRef<HTMLDivElement>(null)
   const drag = useRef<{ id: number; x: number; y: number } | null>(null)
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null)
@@ -81,6 +86,10 @@ export function GestureControls() {
       </div>
       <div className="camera-status">
         {enabled && <p role="status">{status}</p>}
+        {enabled && tracking.status === 'ready' && <p className="pinch-status">
+          {controls.mode === 'dragging' ? `Adjusting volume · ${Math.round(volume * 100)}%`
+            : controls.mode === 'waitingForRelease' ? 'Release your pinch to grab again' : 'Pinch to adjust volume'}
+        </p>}
         {tracking.error && <p role="alert">{tracking.error}</p>}
       </div>
     </div>, document.body)}

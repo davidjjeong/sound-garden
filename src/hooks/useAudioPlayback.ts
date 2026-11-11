@@ -11,6 +11,7 @@ const initial = {
 
 export function useAudioPlayback() {
   const [state, setState] = useState(initial)
+  const [manualVolumeRevision, setManualVolumeRevision] = useState(0)
   const audio = useRef<HTMLAudioElement | null>(null)
   const selected = useRef<LibraryTrack | null>(null)
   const source = useRef<TrackPlaybackUrl | null>(null)
@@ -194,13 +195,21 @@ export function useAudioPlayback() {
     element.currentTime = Math.max(0, Math.min(position, element.duration))
     setState((previous) => ({ ...previous, position: element.currentTime }))
   }
-  function setVolume(value: number) {
+  function applyVolume(value: number) {
     if (!Number.isFinite(value)) return
     const volume = Math.max(0, Math.min(value, 1))
     volumeRef.current = volume
     if (volume > 0) lastAudibleVolume.current = volume
     engine.current?.setVolume(volume)
     setState((previous) => ({ ...previous, volume }))
+  }
+  function setVolume(value: number) {
+    if (!Number.isFinite(value)) return
+    setManualVolumeRevision(revision => revision + 1)
+    applyVolume(value)
+  }
+  function setGestureVolume(value: number) {
+    applyVolume(value)
   }
   function toggleMute() {
     setVolume(volumeRef.current > 0 ? 0 : lastAudibleVolume.current)
@@ -235,7 +244,7 @@ export function useAudioPlayback() {
   function readFrequencyBands(): Float32Array | null {
     return engine.current?.readFrequencyBands() ?? null
   }
-  return { ...state, readFrequencyBands, select, play, pause, seek, setVolume, toggleMute, retry, beginDeletion, completeDeletion, readWaveForm }
+  return { ...state, manualVolumeRevision, setGestureVolume, readFrequencyBands, select, play, pause, seek, setVolume, toggleMute, retry, beginDeletion, completeDeletion, readWaveForm }
 }
 
 export type AudioPlayback = ReturnType<typeof useAudioPlayback>

@@ -8,7 +8,7 @@ afterEach(cleanup)
 function playback(patch: Partial<AudioPlayback> = {}): AudioPlayback {
   return {
     track: { id: 'id', title: 'Soft Orbit', storage_path: 'path', size_bytes: 10, created_at: 'date' },
-    isLoading: false, isPlaying: false, isUnavailable: false, position: 65, duration: 180, volume: .5,
+    isLoading: false, isPlaying: false, isUnavailable: false, position: 65, duration: 180, volume: .5, manualVolumeRevision: 0, setGestureVolume: vi.fn(),
     error: '', notice: '', select: vi.fn(), play: vi.fn(), pause: vi.fn(), seek: vi.fn(),
     setVolume: vi.fn(), toggleMute: vi.fn(), readWaveForm: vi.fn(() => null), retry: vi.fn(), beginDeletion: vi.fn(), completeDeletion: vi.fn(), ...patch,
   }

@@ -139,3 +139,29 @@ seekable timeline. The player retains the seek control.
 Automated tests cover structure, independent frequency response, decay, pause,
 missing data, buffer reuse, decibel conversion, and animation cleanup. Actual
 appearance, audio synchronization, and browser media behavior need browser review.
+
+
+## Pinch-and-drag volume
+
+`GestureControls` passes hand landmarks to `useHandControls`; inference remains
+in `useHandTracking` and the worker. `gestures.ts` contains the pure detector,
+midpoint/dead-zone mapping, and stateful interaction controller.
+
+- Pinch starts at thumb/index distance divided by palm size ≤ 0.25; it releases
+  at ≥ 0.4. A new grab records current volume and fingertip midpoint Y, without
+  emitting a volume change.
+- While pinching, Y is eased with an 80 ms time constant. Movement outside a
+  0.012 normalized-image dead zone maps to volume with sensitivity 2 and clamps
+  to 0–1. Changes smaller than 0.002 are suppressed. Only new landmark objects
+  advance the controller; playback-state renders do not replay tracking frames.
+- Release, missing/invalid hand data, tracking failure, or camera disable ends the
+  grab and preserves volume. Re-grabbing uses the current volume and position.
+- Manual slider and mute actions increment `manualVolumeRevision`. Gesture edits
+  do not. A manual edit cancels the grab and requires release before re-grabbing.
+- `setGestureVolume` and manual `setVolume` share `applyVolume`, including gain
+  updates, UI state, clamping, and last-audible-volume preservation. The analyser
+  remains after gain, so the visualizer follows the adjusted audio.
+
+The preview displays instructions, live volume percentage during a grab, or a
+release-to-rearm message after manual override. Webcam testing is still needed
+to tune pinch thresholds, dead zone, and sensitivity for comfort.

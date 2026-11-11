@@ -7,19 +7,19 @@ vi.mock('../../src/hooks/useCamera', () => ({ useCamera: () => ({ videoRef: { cu
 vi.mock('../../src/hooks/useHandTracking', () => ({ useHandTracking: () => ({ status: 'ready', error: '', landmarks: mocks.landmarks }) }))
 afterEach(() => { cleanup(); mocks.enabled = true; mocks.landmarks = []; vi.clearAllMocks() })
 it('portals the floating preview outside the panel and keeps detection text inside it', () => {
-  const { container, rerender } = render(createElement(GestureControls))
+  const { container, rerender } = render(createElement(GestureControls, { volume: .5, manualVolumeRevision: 0, onVolumeChange: vi.fn() }))
   const preview = document.querySelector('.floating-camera')!
   expect(preview.parentElement).toBe(document.body)
   expect(container.contains(preview)).toBe(false)
   expect(container.querySelector('.camera-controls > button')).toBeTruthy()
   expect(screen.getByRole('status').textContent).toBe('No hand detected')
   mocks.landmarks = [[{ x: .5, y: .5, z: 0 }]]
-  rerender(createElement(GestureControls))
+  rerender(createElement(GestureControls, { volume: .5, manualVolumeRevision: 0, onVolumeChange: vi.fn() }))
   expect(screen.getByRole('status').textContent).toBe('Hand detected')
   expect(container.querySelector('[role="status"]')).toBeNull()
 })
 it('supports keyboard movement and constrains the preview to the viewport', () => {
-  render(createElement(GestureControls))
+  render(createElement(GestureControls, { volume: .5, manualVolumeRevision: 0, onVolumeChange: vi.fn() }))
   const preview = document.querySelector('.floating-camera') as HTMLElement
   vi.spyOn(preview, 'getBoundingClientRect').mockReturnValue({ left: 100, top: 100, width: 280, height: 280 } as DOMRect)
   const handle = screen.getByRole('button', { name: /Move camera preview/ })
@@ -31,14 +31,52 @@ it('supports keyboard movement and constrains the preview to the viewport', () =
   expect(mocks.stop).toHaveBeenCalledOnce()
 })
 it('closes with the close button and keeps the video mounted while disabled', () => {
-  const { rerender } = render(createElement(GestureControls))
+  const { rerender } = render(createElement(GestureControls, { volume: .5, manualVolumeRevision: 0, onVolumeChange: vi.fn() }))
   fireEvent.click(screen.getByRole('button', { name: 'Close camera preview' }))
   expect(mocks.stop).toHaveBeenCalledOnce()
   mocks.enabled = false
-  rerender(createElement(GestureControls))
+  rerender(createElement(GestureControls, { volume: .5, manualVolumeRevision: 0, onVolumeChange: vi.fn() }))
   const preview = document.querySelector('.floating-camera') as HTMLElement
   expect(preview.hidden).toBe(true)
   expect(preview.querySelector('video')).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'Enable camera' }))
   expect(mocks.start).toHaveBeenCalledOnce()
+})
+
+function pinchHand(gap: number) {
+  const hand = Array.from({ length: 21 }, () => ({ x: 0, y: 0, z: 0 }))
+  hand[9] = { x: 0, y: 1, z: 0 }
+  hand[4] = { x: 0, y: 1, z: 0 }
+  hand[8] = { x: gap, y: 1, z: 0 }
+  return hand
+}
+it('shows pinch hysteresis and releases when tracking loses the hand', () => {
+  const { rerender } = render(createElement(GestureControls, { volume: .5, manualVolumeRevision: 0, onVolumeChange: vi.fn() }))
+  expect(screen.getByText('Pinch to adjust volume')).toBeTruthy()
+  mocks.landmarks = [pinchHand(.2)]
+  rerender(createElement(GestureControls, { volume: .5, manualVolumeRevision: 0, onVolumeChange: vi.fn() }))
+  expect(screen.getByText('Adjusting volume · 50%')).toBeTruthy()
+  mocks.landmarks = [pinchHand(.3)]
+  rerender(createElement(GestureControls, { volume: .5, manualVolumeRevision: 0, onVolumeChange: vi.fn() }))
+  expect(screen.getByText('Adjusting volume · 50%')).toBeTruthy()
+  mocks.landmarks = [pinchHand(.4)]
+  rerender(createElement(GestureControls, { volume: .5, manualVolumeRevision: 0, onVolumeChange: vi.fn() }))
+  expect(screen.getByText('Pinch to adjust volume')).toBeTruthy()
+  mocks.landmarks = [pinchHand(.2)]
+  rerender(createElement(GestureControls, { volume: .5, manualVolumeRevision: 0, onVolumeChange: vi.fn() }))
+  mocks.landmarks = []
+  rerender(createElement(GestureControls, { volume: .5, manualVolumeRevision: 0, onVolumeChange: vi.fn() }))
+  expect(screen.getByText('Pinch to adjust volume')).toBeTruthy()
+})
+it('clears the pinch on camera disable instead of retaining the previous grab', () => {
+  mocks.landmarks = [pinchHand(.2)]
+  const { rerender } = render(createElement(GestureControls, { volume: .5, manualVolumeRevision: 0, onVolumeChange: vi.fn() }))
+  expect(screen.getByText('Adjusting volume · 50%')).toBeTruthy()
+  mocks.enabled = false
+  rerender(createElement(GestureControls, { volume: .5, manualVolumeRevision: 0, onVolumeChange: vi.fn() }))
+  expect(screen.queryByText('Adjusting volume · 50%')).toBeNull()
+  mocks.enabled = true
+  mocks.landmarks = [pinchHand(.3)]
+  rerender(createElement(GestureControls, { volume: .5, manualVolumeRevision: 0, onVolumeChange: vi.fn() }))
+  expect(screen.getByText('Pinch to adjust volume')).toBeTruthy()
 })

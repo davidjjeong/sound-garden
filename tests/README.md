@@ -230,5 +230,18 @@ refresh existing tabs if a worker fails with `504 Outdated Optimize Dep`.
   intrinsic aspect ratio. Inference is capped at 20 frames/second; actual throughput
   depends on the device. No camera frames are sent to a server.
 - Test real hands in the studio to verify overlay alignment, hand loss/reacquisition,
-  lighting, and camera disable/navigation cleanup. Gesture-to-music controls are
-  not implemented yet.
+  lighting, and camera disable/navigation cleanup. Pinch-and-drag volume is implemented; play/pause gestures are not.
+
+
+## Pinch volume control coverage
+
+- `gestures.test.ts`: pinch/release boundaries, size normalization, missing or
+  incomplete hands, zero palm size, and invalid coordinates.
+- `useHandControls.test.ts`: grab without a jump, movement direction, midpoint,
+  dead zone, clamping, smoothing, duplicate-result suppression, hand loss,
+  disabling, re-grabbing, manual override/release-to-rearm, and no feedback from
+  gesture-driven volume renders.
+- Playback tests distinguish manual revision increments from gesture updates;
+  preview tests cover status text and reset on camera disable/hand loss.
+- Real-camera recognition and subjective movement latency require manual testing;
+  automated tests use synthetic landmarks and mocked media resources.
