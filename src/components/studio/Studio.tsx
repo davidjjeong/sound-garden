@@ -16,11 +16,11 @@ export function Studio() {
         <AudioPlayer playback={playback} />
       </section>
       <section className="waveform-panel" aria-labelledby="waveform-title">
+        <GestureControls />
         <WaveformView
           readFrequencyBands={playback.readFrequencyBands}
           isPlaying={playback.isPlaying}
         />
-        <GestureControls />
       </section>
     </main>
   )
