@@ -129,7 +129,7 @@ seekable timeline. The player retains the seek control.
 3. `useAudioPlayback` exposes the reader; `Studio` passes it and playback state to
    the visualizer. No second player, download, or offline decoding is needed.
 4. On each animation frame, the visualizer blends neighboring bands (20/60/20%),
-   applies 8× visual-only sensitivity and logarithmic display compression, then
+   applies 4× visual-only sensitivity and logarithmic display compression, then
    eases bar levels with a 45 ms
    attack and 160 ms release. These are time constants, not fixed transition lengths.
 5. Bars expand symmetrically about the centerline, span 82% of the panel width,

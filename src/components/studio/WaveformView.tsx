@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 const BAR_COUNT = 96
-const VISUAL_GAIN = 8 // Display sensitivity only; does not change audio gain.
+const VISUAL_GAIN = 4 // Display sensitivity only; does not change audio gain.
 const EMPTY_BARS = Array.from({ length: BAR_COUNT }, (_, i) => i)
 type Props = { readFrequencyBands: () => Float32Array | null; isPlaying: boolean }
 
