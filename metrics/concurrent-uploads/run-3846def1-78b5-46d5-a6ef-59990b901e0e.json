@@ -1,0 +1,724 @@
+{
+  "schemaVersion": 1,
+  "runId": "3846def1-78b5-46d5-a6ef-59990b901e0e",
+  "startedAt": "2026-11-12T18:00:43.878Z",
+  "fixtureType": "generated 1-second mono 8000 Hz PCM WAV",
+  "authentication": "dedicated authenticated user; no service-role key",
+  "batches": [
+    {
+      "concurrency": 2,
+      "mode": "full-workflow",
+      "fixture": {
+        "filename": "benchmark-3846def1-78b5-46d5-a6ef-59990b901e0e-0.wav",
+        "bytes": 16044,
+        "sha256": "b7edab27240e67ef5d56d6137e9f074a6fb0cfcdda3487b92ea927d94c3a9d0e"
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "idempotencyKey": "e50cbd20-cd93-40da-b5bb-219183a5ae38",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "ee73e6b7-ff60-4b35-a180-fe331d40e50f",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 2346.0832090000004
+        },
+        {
+          "attempt": 2,
+          "idempotencyKey": "be15439b-93bc-4d01-9736-ff1df3e39fd1",
+          "stage": "finalize",
+          "outcome": "ready",
+          "transferStarted": true,
+          "trackId": "5e95b3f4-b80a-48d6-9bfe-758f244528a3",
+          "status": 200,
+          "durationMs": 2345.7103749999997
+        }
+      ],
+      "transferAttempts": 2,
+      "readyResponses": 1,
+      "duplicateResponses": 1,
+      "unexpectedResponses": 0,
+      "durationMs": 2346.1825419999996,
+      "verification": {
+        "verified": true,
+        "checkedAt": "2026-11-12T18:00:47.005Z",
+        "readyRows": 1,
+        "pendingRows": 1,
+        "otherRows": 0,
+        "readyHashMatches": true,
+        "readyObjectVerified": true,
+        "rows": [
+          {
+            "id": "ee73e6b7-ff60-4b35-a180-fe331d40e50f",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:44.548604+00:00"
+          },
+          {
+            "id": "5e95b3f4-b80a-48d6-9bfe-758f244528a3",
+            "status": "ready",
+            "expiresAt": null
+          }
+        ],
+        "objects": [
+          {
+            "trackId": "ee73e6b7-ff60-4b35-a180-fe331d40e50f",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "5e95b3f4-b80a-48d6-9bfe-758f244528a3",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          }
+        ],
+        "cleanup": "deferred-until-expiry-and-grace"
+      },
+      "passed": true
+    },
+    {
+      "concurrency": 5,
+      "mode": "full-workflow",
+      "fixture": {
+        "filename": "benchmark-3846def1-78b5-46d5-a6ef-59990b901e0e-1.wav",
+        "bytes": 16044,
+        "sha256": "7e14f49932f7d88cad31379e3f6e480dacadfd22a33d09bc2db7878067d3f229"
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "idempotencyKey": "55b770c1-4227-4060-b9d2-85d2d6aff7e0",
+          "stage": "finalize",
+          "outcome": "ready",
+          "transferStarted": true,
+          "trackId": "a80bb649-9181-4537-a62c-7430d629a9ce",
+          "status": 200,
+          "durationMs": 1626.8732499999996
+        },
+        {
+          "attempt": 2,
+          "idempotencyKey": "80252d4e-d713-4804-8069-3d4eeb49cb8b",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "feab7866-23a5-4afc-bbec-d59b26f66d8c",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 1680.1323750000001
+        },
+        {
+          "attempt": 3,
+          "idempotencyKey": "8fc1e661-49c7-492b-b19f-22b2630097d8",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "d68f6890-b929-4736-9cb9-3a30bf78fd85",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 1683.8620840000003
+        },
+        {
+          "attempt": 4,
+          "idempotencyKey": "d237be39-76c0-4f96-a62f-69be54339cc3",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "3b97ec26-6635-4358-bc3f-19f6626844f3",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 1952.8327499999996
+        },
+        {
+          "attempt": 5,
+          "idempotencyKey": "72cfae35-9a1b-4f22-810f-08525fa02d7f",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "9f30c7e7-5741-4f39-b81e-d404b12b3b9f",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 2104.381375
+        }
+      ],
+      "transferAttempts": 5,
+      "readyResponses": 1,
+      "duplicateResponses": 4,
+      "unexpectedResponses": 0,
+      "durationMs": 2104.400084,
+      "verification": {
+        "verified": true,
+        "checkedAt": "2026-11-12T18:00:50.050Z",
+        "readyRows": 1,
+        "pendingRows": 4,
+        "otherRows": 0,
+        "readyHashMatches": true,
+        "readyObjectVerified": true,
+        "rows": [
+          {
+            "id": "3b97ec26-6635-4358-bc3f-19f6626844f3",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:47.326869+00:00"
+          },
+          {
+            "id": "feab7866-23a5-4afc-bbec-d59b26f66d8c",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:47.36718+00:00"
+          },
+          {
+            "id": "9f30c7e7-5741-4f39-b81e-d404b12b3b9f",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:47.37769+00:00"
+          },
+          {
+            "id": "d68f6890-b929-4736-9cb9-3a30bf78fd85",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:47.395556+00:00"
+          },
+          {
+            "id": "a80bb649-9181-4537-a62c-7430d629a9ce",
+            "status": "ready",
+            "expiresAt": null
+          }
+        ],
+        "objects": [
+          {
+            "trackId": "3b97ec26-6635-4358-bc3f-19f6626844f3",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "feab7866-23a5-4afc-bbec-d59b26f66d8c",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "9f30c7e7-5741-4f39-b81e-d404b12b3b9f",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "d68f6890-b929-4736-9cb9-3a30bf78fd85",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "a80bb649-9181-4537-a62c-7430d629a9ce",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          }
+        ],
+        "cleanup": "deferred-until-expiry-and-grace"
+      },
+      "passed": true
+    },
+    {
+      "concurrency": 10,
+      "mode": "full-workflow",
+      "fixture": {
+        "filename": "benchmark-3846def1-78b5-46d5-a6ef-59990b901e0e-2.wav",
+        "bytes": 16044,
+        "sha256": "c651499411085cc15d093f390dc47daf770dcef46cb883823ca2d02ba505c4d3"
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "idempotencyKey": "f54697b6-7eda-4fa0-b8cc-54ac6d9bacf5",
+          "stage": "finalize",
+          "outcome": "ready",
+          "transferStarted": true,
+          "trackId": "979d9a0f-1968-4144-a38b-31b8d4fb97cc",
+          "status": 200,
+          "durationMs": 1408.184792
+        },
+        {
+          "attempt": 2,
+          "idempotencyKey": "3dc1394a-6dbd-4219-8b83-ea773ca50f86",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "f2584e43-a502-428d-8549-f59a5b989c2b",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 1504.8296250000003
+        },
+        {
+          "attempt": 3,
+          "idempotencyKey": "0b333429-2a0c-443d-8228-ea4ea75f887c",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "113c3702-cb97-4dbe-9dec-d7c2717cb4c7",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 1706.7630840000002
+        },
+        {
+          "attempt": 4,
+          "idempotencyKey": "5e34eca9-5b42-451e-94ae-d9349518b435",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "28a8209a-78c5-4755-8c39-0b4c8e28f8f6",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 1700.7852089999997
+        },
+        {
+          "attempt": 5,
+          "idempotencyKey": "72a45761-e187-420b-9958-3c309404e86a",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "8acd1312-240f-482b-84b3-a1ef7938ac34",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 1656.2347919999993
+        },
+        {
+          "attempt": 6,
+          "idempotencyKey": "3c78aef2-6d65-428c-bb80-2a42d754764d",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "5c970005-2fc3-403b-b4ce-1178d3854652",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 1698.7610839999998
+        },
+        {
+          "attempt": 7,
+          "idempotencyKey": "051e01d8-f186-4edc-8513-da638c49986c",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "018f3d4d-eec6-4c9d-b658-ae28dc7a0de7",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 1656.1834999999992
+        },
+        {
+          "attempt": 8,
+          "idempotencyKey": "d3511e33-022c-413e-8e63-524d1a8cd3f4",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "6667a7bf-71f5-4e20-aa11-78242217ff7f",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 1508.9982920000002
+        },
+        {
+          "attempt": 9,
+          "idempotencyKey": "f8cb3cf3-6938-4739-92a9-b24d3596f011",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "1ab4da20-9659-424b-ac84-a1f68a9ad989",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 2179.419416999999
+        },
+        {
+          "attempt": 10,
+          "idempotencyKey": "42b52dd3-373e-4971-93fe-777076cb59fd",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "4357abc6-da68-4752-b7d1-f946dba6262c",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 1433.968499999999
+        }
+      ],
+      "transferAttempts": 10,
+      "readyResponses": 1,
+      "duplicateResponses": 9,
+      "unexpectedResponses": 0,
+      "durationMs": 2179.4655839999996,
+      "verification": {
+        "verified": true,
+        "checkedAt": "2026-11-12T18:00:53.329Z",
+        "readyRows": 1,
+        "pendingRows": 9,
+        "otherRows": 0,
+        "readyHashMatches": true,
+        "readyObjectVerified": true,
+        "rows": [
+          {
+            "id": "4357abc6-da68-4752-b7d1-f946dba6262c",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:50.382324+00:00"
+          },
+          {
+            "id": "6667a7bf-71f5-4e20-aa11-78242217ff7f",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:50.347203+00:00"
+          },
+          {
+            "id": "113c3702-cb97-4dbe-9dec-d7c2717cb4c7",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:50.454763+00:00"
+          },
+          {
+            "id": "28a8209a-78c5-4755-8c39-0b4c8e28f8f6",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:50.462151+00:00"
+          },
+          {
+            "id": "1ab4da20-9659-424b-ac84-a1f68a9ad989",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:50.50642+00:00"
+          },
+          {
+            "id": "8acd1312-240f-482b-84b3-a1ef7938ac34",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:50.521795+00:00"
+          },
+          {
+            "id": "f2584e43-a502-428d-8549-f59a5b989c2b",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:50.525698+00:00"
+          },
+          {
+            "id": "5c970005-2fc3-403b-b4ce-1178d3854652",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:50.54759+00:00"
+          },
+          {
+            "id": "018f3d4d-eec6-4c9d-b658-ae28dc7a0de7",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:50.572095+00:00"
+          },
+          {
+            "id": "979d9a0f-1968-4144-a38b-31b8d4fb97cc",
+            "status": "ready",
+            "expiresAt": null
+          }
+        ],
+        "objects": [
+          {
+            "trackId": "4357abc6-da68-4752-b7d1-f946dba6262c",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "6667a7bf-71f5-4e20-aa11-78242217ff7f",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "113c3702-cb97-4dbe-9dec-d7c2717cb4c7",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "28a8209a-78c5-4755-8c39-0b4c8e28f8f6",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "1ab4da20-9659-424b-ac84-a1f68a9ad989",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "8acd1312-240f-482b-84b3-a1ef7938ac34",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "f2584e43-a502-428d-8549-f59a5b989c2b",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "5c970005-2fc3-403b-b4ce-1178d3854652",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "018f3d4d-eec6-4c9d-b658-ae28dc7a0de7",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "979d9a0f-1968-4144-a38b-31b8d4fb97cc",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          }
+        ],
+        "cleanup": "deferred-until-expiry-and-grace"
+      },
+      "passed": true
+    },
+    {
+      "concurrency": 10,
+      "mode": "reservation-barrier",
+      "fixture": {
+        "filename": "benchmark-3846def1-78b5-46d5-a6ef-59990b901e0e-3.wav",
+        "bytes": 16044,
+        "sha256": "3fc9e75e19e6997cf78dd9b168798947d1bbb11b356ae8a577161dec8cbe4046"
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "idempotencyKey": "dc9e98e7-6b1c-4018-afd8-082f2a37189e",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "68a330e9-33b9-419b-b798-672b6157ff37",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 2138.906417
+        },
+        {
+          "attempt": 2,
+          "idempotencyKey": "dc55a4e9-a9c1-47c4-a453-a069ab490f9b",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "b885d8e7-e8a6-4c9c-abce-15ee0268dec0",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 2373.319708000001
+        },
+        {
+          "attempt": 3,
+          "idempotencyKey": "8eda0e08-fdf2-4545-8dde-8d683ee6cfa8",
+          "stage": "finalize",
+          "outcome": "ready",
+          "transferStarted": true,
+          "trackId": "eceb08c0-69f9-4eb7-ac00-495fe587d344",
+          "status": 200,
+          "durationMs": 2108.5148750000008
+        },
+        {
+          "attempt": 4,
+          "idempotencyKey": "a886ec68-8dc1-4149-824e-4633f95d332a",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "3e63c63f-0a07-441e-b359-09c86055e635",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 2293.25425
+        },
+        {
+          "attempt": 5,
+          "idempotencyKey": "bb6de153-1a43-4dc3-bf00-897fe7f68d77",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "e06e0c57-a16e-45d4-af35-6f0409eeff1b",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 2169.693333000001
+        },
+        {
+          "attempt": 6,
+          "idempotencyKey": "0d867803-1f63-4ee2-aeb2-b6052b19ff78",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "da1f7ea7-d90e-4ac9-a3bf-a198acd70463",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 2138.8875420000004
+        },
+        {
+          "attempt": 7,
+          "idempotencyKey": "25e04031-7bd4-43c5-b65d-614dbe6a20e5",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "a3c1d520-f114-4e1f-b0eb-1ad94261895c",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 2181.720542000001
+        },
+        {
+          "attempt": 8,
+          "idempotencyKey": "77e53d2a-fbf1-4bdc-acb3-eaeb82e131d6",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "64a65feb-a687-44c2-bfb3-e8cd0a18c8ab",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 2133.314083000001
+        },
+        {
+          "attempt": 9,
+          "idempotencyKey": "741e1d93-6896-4db4-b99f-0053ddd6a87d",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "acd3f7dc-2f7f-4ba3-9990-5bd110545cf9",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 2209.2299170000006
+        },
+        {
+          "attempt": 10,
+          "idempotencyKey": "feb836a3-a0e1-49b2-b467-661a54c78995",
+          "stage": "finalize",
+          "outcome": "duplicate",
+          "transferStarted": true,
+          "trackId": "ab27cfce-ca13-469c-bf13-e1456aaeeeb5",
+          "status": 409,
+          "code": "DUPLICATE_TRACK",
+          "durationMs": 2296.297917
+        }
+      ],
+      "transferAttempts": 10,
+      "readyResponses": 1,
+      "duplicateResponses": 9,
+      "unexpectedResponses": 0,
+      "durationMs": 2373.3425829999996,
+      "verification": {
+        "verified": true,
+        "checkedAt": "2026-11-12T18:00:57.214Z",
+        "readyRows": 1,
+        "pendingRows": 9,
+        "otherRows": 0,
+        "readyHashMatches": true,
+        "readyObjectVerified": true,
+        "rows": [
+          {
+            "id": "64a65feb-a687-44c2-bfb3-e8cd0a18c8ab",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:53.633179+00:00"
+          },
+          {
+            "id": "da1f7ea7-d90e-4ac9-a3bf-a198acd70463",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:53.658641+00:00"
+          },
+          {
+            "id": "acd3f7dc-2f7f-4ba3-9990-5bd110545cf9",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:53.661977+00:00"
+          },
+          {
+            "id": "3e63c63f-0a07-441e-b359-09c86055e635",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:53.709973+00:00"
+          },
+          {
+            "id": "e06e0c57-a16e-45d4-af35-6f0409eeff1b",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:53.747306+00:00"
+          },
+          {
+            "id": "ab27cfce-ca13-469c-bf13-e1456aaeeeb5",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:53.824205+00:00"
+          },
+          {
+            "id": "b885d8e7-e8a6-4c9c-abce-15ee0268dec0",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:53.783619+00:00"
+          },
+          {
+            "id": "68a330e9-33b9-419b-b798-672b6157ff37",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:53.829128+00:00"
+          },
+          {
+            "id": "a3c1d520-f114-4e1f-b0eb-1ad94261895c",
+            "status": "pending",
+            "expiresAt": "2026-11-12T22:00:53.829275+00:00"
+          },
+          {
+            "id": "eceb08c0-69f9-4eb7-ac00-495fe587d344",
+            "status": "ready",
+            "expiresAt": null
+          }
+        ],
+        "objects": [
+          {
+            "trackId": "64a65feb-a687-44c2-bfb3-e8cd0a18c8ab",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "da1f7ea7-d90e-4ac9-a3bf-a198acd70463",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "acd3f7dc-2f7f-4ba3-9990-5bd110545cf9",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "3e63c63f-0a07-441e-b359-09c86055e635",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "e06e0c57-a16e-45d4-af35-6f0409eeff1b",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "ab27cfce-ca13-469c-bf13-e1456aaeeeb5",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "b885d8e7-e8a6-4c9c-abce-15ee0268dec0",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "68a330e9-33b9-419b-b798-672b6157ff37",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "a3c1d520-f114-4e1f-b0eb-1ad94261895c",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          },
+          {
+            "trackId": "eceb08c0-69f9-4eb7-ac00-495fe587d344",
+            "state": "present",
+            "bytes": 16044,
+            "sha256Matches": true
+          }
+        ],
+        "cleanup": "deferred-until-expiry-and-grace"
+      },
+      "passed": true
+    }
+  ],
+  "finishedAt": "2026-11-12T18:00:57.215Z"
+}
