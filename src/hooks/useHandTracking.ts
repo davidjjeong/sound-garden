@@ -1,5 +1,8 @@
+import type { TrackingMetrics, TrackingFrame } from '../lib/trackingMetrics'
 import { useEffect, useState, type RefObject } from 'react'
 import type { HandPoint, HandTrackingRequest, HandTrackingResponse } from '../types/handTracking'
+
+const EMPTY_LANDMARKS: HandPoint[][] = []
 
 type TrackingState = { status: 'idle' | 'loading' | 'ready' | 'error'; error: string; landmarks: HandPoint[][] }
 
@@ -17,8 +20,18 @@ export function useHandTracking(enabled: boolean, videoRef?: RefObject<HTMLVideo
     let failed = false
     let visibilityEpoch = 0
     let sentEpoch = 0
+    let metrics: TrackingMetrics | undefined
+    let measuredFrame: TrackingFrame = null
+    if (import.meta.env.DEV && new URLSearchParams(window.location.search).get('benchmark') === '1') {
+      void import('../lib/trackingMetrics').then(module => {
+        if (!active || failed) return
+        metrics = module.trackingMetrics
+        metrics.setAvailable(ready && !document.hidden)
+      })
+    }
     const visibilityChanged = () => {
       visibilityEpoch++
+      metrics?.setAvailable(ready && !document.hidden, 'stale')
       lastVideoTime = -1
       lastTime = -Infinity
       if (active && !failed) setState(previous => ({ ...previous, landmarks: [] }))
@@ -34,9 +47,12 @@ export function useHandTracking(enabled: boolean, videoRef?: RefObject<HTMLVideo
       lastTime = timestamp
       lastVideoTime = video.currentTime
       const captureEpoch = visibilityEpoch
+      measuredFrame = metrics?.beginFrame(video.videoWidth, video.videoHeight) ?? null
+      const capturedMeasurement = measuredFrame
       void createImageBitmap(video).then(frame => {
         if (!active || failed || document.hidden || captureEpoch !== visibilityEpoch) {
           frame.close()
+          metrics?.finishFrame(capturedMeasurement, 'stale')
           busy = false
           return
         }
@@ -51,6 +67,8 @@ export function useHandTracking(enabled: boolean, videoRef?: RefObject<HTMLVideo
     }
     const fail = (message: string) => {
       if (!active) return
+      metrics?.finishFrame(measuredFrame, 'failed')
+      metrics?.setAvailable(false)
       failed = true
       cancelAnimationFrame(scheduled)
       worker?.terminate()
@@ -67,6 +85,8 @@ export function useHandTracking(enabled: boolean, videoRef?: RefObject<HTMLVideo
           const message = event.data
           if (message.type === 'error') fail(message.message)
           else if (message.type === 'result') {
+            metrics?.finishFrame(measuredFrame, !document.hidden && sentEpoch === visibilityEpoch ? 'completed' : 'stale', message.landmarks.length)
+            measuredFrame = null
             busy = false
             if (!document.hidden && sentEpoch === visibilityEpoch) {
               setState({ status: 'ready', error: '', landmarks: message.landmarks })
@@ -75,6 +95,7 @@ export function useHandTracking(enabled: boolean, videoRef?: RefObject<HTMLVideo
             setState({ status: message.type, error: '', landmarks: [] })
             if (message.type === 'ready' && !ready) {
               ready = true
+              metrics?.setAvailable(!document.hidden)
               if (videoRef) scheduled = requestAnimationFrame(capture)
             }
           }
@@ -92,6 +113,7 @@ export function useHandTracking(enabled: boolean, videoRef?: RefObject<HTMLVideo
       }
     })
     return () => {
+      metrics?.setAvailable(false)
       active = false
       document.removeEventListener('visibilitychange', visibilityChanged)
       cancelAnimationFrame(scheduled)
@@ -103,5 +125,5 @@ export function useHandTracking(enabled: boolean, videoRef?: RefObject<HTMLVideo
       }
     }
   }, [enabled, videoRef])
-  return enabled ? state : { status: 'idle' as const, error: '', landmarks: [] }
+  return enabled ? state : { status: 'idle' as const, error: '', landmarks: EMPTY_LANDMARKS }
 }

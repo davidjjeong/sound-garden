@@ -1,0 +1,14 @@
+.benchmark-panel { position: fixed; left: 16px; bottom: 16px; z-index: 900; width: min(330px, calc(100vw - 32px)); max-height: 75dvh; overflow: auto; box-sizing: border-box; padding: 18px; border: 1px solid #dbe5de; border-radius: 14px; background: white; color: #303a34; box-shadow: 0 8px 32px #20372b22; font: 12px/1.5 Inter, sans-serif; }
+.benchmark-panel header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.benchmark-panel header span { font-size: 9px; letter-spacing: .08em; color: #657a6d; }
+.benchmark-panel p { margin: 10px 0; color: #657a6d; }
+.benchmark-panel label { display: block; margin: 8px 0; }
+.benchmark-panel input { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 7px 9px; border: 1px solid #dbe5de; border-radius: 7px; font: inherit; }
+.benchmark-actions { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0; }
+.benchmark-actions button { padding: 6px 10px; border: 1px solid #dbe5de; border-radius: 7px; background: #edf3ef; color: #303a34; font: inherit; cursor: pointer; }
+.benchmark-actions button:hover:not(:disabled) { background: #dfeae3; }
+.benchmark-actions button:disabled { opacity: .5; cursor: default; }
+.benchmark-panel :focus-visible { outline: 2px solid #89a995; outline-offset: 2px; }
+.benchmark-panel dl { margin: 10px 0; }
+.benchmark-panel dl div { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+.benchmark-panel dd { margin: 0; font-variant-numeric: tabular-nums; }

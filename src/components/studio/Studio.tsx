@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { useAudioPlayback } from '../../hooks/useAudioPlayback'
 import { TrackLibrary } from './TrackLibrary'
 import { AudioPlayer } from './AudioPlayer'
@@ -5,10 +6,14 @@ import { WaveformView } from './WaveformView'
 import { GestureControls } from './GestureControls'
 import './Studio.css'
 
+const BenchmarkPanel = import.meta.env.DEV && new URLSearchParams(window.location.search).get('benchmark') === '1'
+  ? lazy(() => import('./BenchmarkPanel')) : null
+
 export function Studio() {
   const playback = useAudioPlayback()
   return (
     <main className="studio-layout">
+      {BenchmarkPanel && <Suspense fallback={null}><BenchmarkPanel /></Suspense>}
       <section className="track-panel" aria-labelledby="library-title">
         <TrackLibrary selectedTrackId={playback.track?.id ?? null} isPlaying={playback.isPlaying}
           isLoadingTrack={playback.isLoading} onSelectTrack={playback.select}

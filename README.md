@@ -176,3 +176,7 @@ Further implementation details:
 - [Duplicate prevention](docs/duplicate_prevention.md)
 - [Deletion workflow](docs/delete_workflow.md)
 - [Cleanup workflow](docs/cleanup_workflow.md)
+
+## Development performance measurements
+
+Use `/studio?benchmark=1` on the local Vite server for opt-in tracking latency and throughput measurement. See the [benchmark procedure](docs/benchmarks/README.md). The panel and collection code are excluded from production builds.

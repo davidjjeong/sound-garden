@@ -34,3 +34,6 @@ dist-ssr
 
 # Local Vercel project metadata
 .vercel/
+
+# Local benchmark exports
+benchmark-results/

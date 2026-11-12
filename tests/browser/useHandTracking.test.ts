@@ -1,3 +1,4 @@
+import { trackingMetrics } from '../../src/lib/trackingMetrics'
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useHandTracking } from '../../src/hooks/useHandTracking'
@@ -152,4 +153,56 @@ it('handles bitmap capture failure without leaving an inference loop running', a
   expect(worker.terminate).toHaveBeenCalled()
   act(() => tick(200))
   expect(capture).toHaveBeenCalledOnce()
+})
+
+it('times actual capture/result boundaries only in opt-in sessions and excludes old in-flight frames', async () => {
+  const originalUrl = window.location.href
+  window.history.replaceState({}, '', '?benchmark=1')
+  let now = 0
+  vi.spyOn(performance, 'now').mockImplementation(() => now)
+  vi.spyOn(document, 'hidden', 'get').mockReturnValue(false)
+  let tick: FrameRequestCallback = () => {}
+  vi.stubGlobal('requestAnimationFrame', vi.fn(callback => { tick = callback; return 1 }))
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  vi.stubGlobal('createImageBitmap', vi.fn().mockResolvedValue({ close: vi.fn() }))
+  const video = { readyState: 4, videoWidth: 640, videoHeight: 480, currentTime: 1 } as HTMLVideoElement
+  const ref = { current: video }
+  trackingMetrics.reset()
+  trackingMetrics.setAvailable(false)
+  const { unmount } = renderHook(() => useHandTracking(true, ref))
+  try {
+    await waitFor(() => expect(FakeWorker.instances).toHaveLength(1))
+    const worker = FakeWorker.instances[0]
+    act(() => worker.send({ type: 'ready' }))
+    await waitFor(() => expect(trackingMetrics.snapshot().available).toBe(true))
+    now = 100
+    await act(async () => tick(100))
+    now = 150
+    trackingMetrics.start()
+    now = 180
+    act(() => worker.send({ type: 'result', landmarks: [] }))
+    expect(trackingMetrics.snapshot().counts.attempted).toBe(0)
+    now = 3150
+    video.currentTime = 2
+    await act(async () => tick(3150))
+    now = 3180
+    act(() => worker.send({ type: 'result', landmarks: [] }))
+    expect(trackingMetrics.snapshot().p95Ms).toBe(30)
+    expect(trackingMetrics.snapshot().sampleCount).toBe(1)
+    expect(trackingMetrics.snapshot().metadata.cameraWidth).toBe(640)
+    unmount()
+    expect(trackingMetrics.snapshot().available).toBe(false)
+  } finally {
+    unmount()
+    trackingMetrics.reset()
+    trackingMetrics.setAvailable(false)
+    window.history.replaceState({}, '', originalUrl)
+  }
+})
+
+it('returns stable empty landmarks while disabled so gesture effects cannot loop', () => {
+  const { result, rerender } = renderHook(() => useHandTracking(false))
+  const initial = result.current.landmarks
+  rerender()
+  expect(result.current.landmarks).toBe(initial)
 })
