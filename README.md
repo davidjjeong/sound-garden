@@ -50,7 +50,3 @@ npm run build
 Configure your static host to rewrite application routes such as `/studio` to `index.html` so direct links and refreshes work. Serve over HTTPS for future camera access.
 
 Client-side route guards do not secure data. Apply the repository's Supabase migrations, configure private storage and owner-based row-level security, and deploy the Edge Functions before using hosted uploads/deletion. See [test coverage](tests/README.md), [playback workflow](docs/playback_workflow.md), and [cleanup workflow](docs/cleanup_workflow.md) for details.
-
-## Gesture implementation guide
-
-Read the [gesture code walkthrough](docs/gestures/README.md) for the full camera-to-player workflow, pinch-volume math, open-palm hold logic, lifecycle handling, and tests. Formatted for phone reading.
