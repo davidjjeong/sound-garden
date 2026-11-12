@@ -161,12 +161,3 @@ PY
 Percentiles use the nearest-rank definition. Throughput uses total eligible
 results divided by total measured active seconds. Published display values are
 rounded; the JSON retains the original precision.
-
-## Defensible project claim
-
-> Measured 22.2 ms p95 capture-to-result hand-tracking latency at 19 results/sec
-> across 3,550 frames in three sessions on a MacBook Pro M5 at 640 × 480.
-
-Keep the tested setup and measurement boundary attached to the numbers. Three
-consistent runs on one setup do not establish cross-device performance or gesture
-recognition accuracy.
