@@ -31,3 +31,6 @@ dist-ssr
 # Local Deno runtime
 .tools/
 !.vscode/settings.json
+
+# Local Vercel project metadata
+.vercel/
