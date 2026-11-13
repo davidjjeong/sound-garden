@@ -3,12 +3,13 @@ import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAudioPlayback } from '../../src/hooks/useAudioPlayback'
 import { getTrackPlaybackUrl } from '../../src/lib/tracks'
-import type { LibraryTrack } from '../../src/types/tracks'
+import type { LibraryTrack, PlaybackTrack } from '../../src/types/tracks'
 
 const engineMock = vi.hoisted(() => ({
   resume: vi.fn<() => Promise<void>>(),
   setVolume: vi.fn<(volume: number) => void>(),
   readWaveForm: vi.fn<AudioEngine['readWaveForm']>(),
+  readFrequencyBands: vi.fn<AudioEngine['readFrequencyBands']>(),
   dispose: vi.fn<() => Promise<void>>(),
 }))
 vi.mock('../../src/lib/audioEngine', () => ({ createAudioEngine: vi.fn() }))
@@ -35,6 +36,7 @@ beforeEach(() => {
   engineMock.resume.mockResolvedValue(undefined)
   engineMock.dispose.mockResolvedValue(undefined)
   engineMock.readWaveForm.mockReturnValue(new Float32Array(2048))
+  engineMock.readFrequencyBands.mockReturnValue(new Float32Array(96))
   vi.mocked(createAudioEngine).mockReturnValue(engineMock)
   instances.length = 0
   vi.stubGlobal('Audio', FakeAudio)
@@ -318,7 +320,7 @@ it('distinguishes manual volume overrides from gesture volume updates', () => {
 
 it('plays a demo blob URL without signing it and releases playback before local deletion', async () => {
   const resolver = vi.fn(async () => ({ url: 'blob:demo-audio', expiresAt: Infinity }))
-  const { result } = renderHook(() => useAudioPlayback(resolver))
+  const { result } = renderHook(() => useAudioPlayback<PlaybackTrack>(resolver))
   const local = { id: 'local', title: 'Local audio', size_bytes: 100 }
   await act(async () => result.current.select(local))
   expect(instances[0].src).toBe('blob:demo-audio')

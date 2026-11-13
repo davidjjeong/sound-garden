@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["node", "vite/client"],
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": ["tests/browser/**/*.test.ts", "tests/database/**/*.test.ts", "vitest.config.ts"]
+}

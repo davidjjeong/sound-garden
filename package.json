@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run",
+    "typecheck": "tsc -b && tsc -p tsconfig.tests.json",
+    "test": "npm run typecheck && vitest run",
     "test:watch": "vitest",
     "test:edge": "DENO_DIR=/private/tmp/sound-garden-deno-cache .tools/deno/node_modules/.bin/deno test --allow-env --config supabase/functions/deno.json tests/edge/",
     "test:all": "npm test && npm run test:edge"

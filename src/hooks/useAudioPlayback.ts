@@ -257,4 +257,5 @@ export function useAudioPlayback<T extends PlaybackTrack = LibraryTrack>(
   return { ...state, manualVolumeRevision, setGestureVolume, readFrequencyBands, select, play, pause, seek, setVolume, toggleMute, retry, beginDeletion, completeDeletion, readWaveForm }
 }
 
-export type AudioPlayback = ReturnType<typeof useAudioPlayback<PlaybackTrack>>
+// Shared player UI does not select tracks; each library keeps its typed selector.
+export type AudioPlayback = Omit<ReturnType<typeof useAudioPlayback<PlaybackTrack>>, 'select'>

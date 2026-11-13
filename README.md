@@ -124,8 +124,9 @@ See the [upload workflow](docs/upload_workflow.md),
 ## Tests and verification
 
 ```sh
-npm test             # Vitest: browser logic + embedded database
+npm test             # Strict type checks, then Vitest: browser logic + embedded database
 npm run lint         # ESLint
+npm run typecheck    # Strict application, Vite config, and test TypeScript checks
 npm run build        # TypeScript + production frontend build
 npm run test:edge    # Deno: Edge Function tests
 npm run test:all     # Both test suites
