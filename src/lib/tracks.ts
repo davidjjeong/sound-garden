@@ -1,3 +1,4 @@
+import { validateAudioFile } from './audioFiles'
 import type { LibraryTrack, TrackPlaybackUrl } from '../types/tracks'
 import { hashAudioFile } from './contentHash'
 import { DuplicateTrackError } from './uploadErrors'
@@ -5,7 +6,6 @@ import { FunctionsHttpError } from '@supabase/supabase-js'
 import type { ReservationResponse, ReservedTrack, SignedUpload, ReadyTrack } from '../types/uploads'
 import { supabase } from './supabase'
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024 // currently 20MB
 
 export async function getTracks(): Promise<LibraryTrack[]> {
   const { data, error } = await supabase
@@ -115,15 +115,9 @@ export async function uploadReservedFile(
   file: File,
   upload: SignedUpload,
 ): Promise<void> {
+  const validationError = validateAudioFile(file)
+  if (validationError) throw new Error(validationError)
   const extension = file.name.split('.').pop()?.toLowerCase()
-
-  if (extension !== 'mp3' && extension !== 'wav') {
-    throw new Error('Please choose an MP3 or WAV file.')
-  }
-
-  if (file.size <= 0 || file.size > MAX_FILE_SIZE) {
-    throw new Error('Choose a nonempty audio file up to 20 MiB.')
-  }
 
   const uuid = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
   const expectedPath = new RegExp(`^${uuid}/${uuid}\\.${extension}$`, 'i')

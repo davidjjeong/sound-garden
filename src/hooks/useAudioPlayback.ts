@@ -1,19 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
 import { getTrackPlaybackUrl } from '../lib/tracks'
 import { createAudioEngine, type AudioEngine } from '../lib/audioEngine'
-import type { LibraryTrack, TrackPlaybackUrl } from '../types/tracks'
+import type { LibraryTrack, PlaybackTrack, TrackPlaybackUrl } from '../types/tracks'
+
+async function resolveSavedPlaybackUrl(track: PlaybackTrack): Promise<TrackPlaybackUrl> {
+  if (!('storage_path' in track) || typeof track.storage_path !== 'string' ||
+      !('created_at' in track) || typeof track.created_at !== 'string') {
+    throw new Error('Saved track metadata is missing.')
+  }
+  return getTrackPlaybackUrl({ ...track, storage_path: track.storage_path, created_at: track.created_at })
+}
 
 const initial = {
-  track: null as LibraryTrack | null,
+  track: null as PlaybackTrack | null,
   isLoading: false, isPlaying: false, isUnavailable: false,
   position: 0, duration: 0, volume: 1, error: '', notice: '',
 }
 
-export function useAudioPlayback() {
-  const [state, setState] = useState(initial)
+export function useAudioPlayback<T extends PlaybackTrack = LibraryTrack>(
+  resolvePlaybackUrl: (track: T) => Promise<TrackPlaybackUrl> = resolveSavedPlaybackUrl,
+) {
+  const [state, setState] = useState({ ...initial, track: null as T | null })
   const [manualVolumeRevision, setManualVolumeRevision] = useState(0)
   const audio = useRef<HTMLAudioElement | null>(null)
-  const selected = useRef<LibraryTrack | null>(null)
+  const selected = useRef<T | null>(null)
   const source = useRef<TrackPlaybackUrl | null>(null)
   const generation = useRef(0)
   const wantsPlay = useRef(false)
@@ -132,13 +142,13 @@ export function useAudioPlayback() {
     }
   }
 
-  async function prepare(track: LibraryTrack, position: number) {
+  async function prepare(track: T, position: number) {
     const version = ++generation.current
     releaseSource()
     loading.current = true
     setState((previous) => ({ ...previous, isLoading: true, isPlaying: false, error: '', notice: '' }))
     try {
-      const signed = await getTrackPlaybackUrl(track)
+      const signed = await resolvePlaybackUrl(track)
       if (!mounted.current || version !== generation.current || blockedIds.current.has(track.id)) return
       const element = audio.current!
       source.current = signed
@@ -157,7 +167,7 @@ export function useAudioPlayback() {
     }
   }
 
-  function select(track: LibraryTrack) {
+  function select(track: T) {
     if (blockedIds.current.has(track.id)) return
     if (selected.current?.id === track.id) {
       if (wantsPlay.current) pause()
@@ -236,7 +246,7 @@ export function useAudioPlayback() {
     wantsPlay.current = false
     selected.current = null
     releaseSource()
-    setState((previous) => ({ ...initial, volume: previous.volume }))
+    setState((previous) => ({ ...initial, track: null as T | null, volume: previous.volume }))
   }
   function readWaveForm(): Float32Array | null {
     return engine.current?.readWaveForm() ?? null
@@ -247,4 +257,4 @@ export function useAudioPlayback() {
   return { ...state, manualVolumeRevision, setGestureVolume, readFrequencyBands, select, play, pause, seek, setVolume, toggleMute, retry, beginDeletion, completeDeletion, readWaveForm }
 }
 
-export type AudioPlayback = ReturnType<typeof useAudioPlayback>
+export type AudioPlayback = ReturnType<typeof useAudioPlayback<PlaybackTrack>>

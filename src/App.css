@@ -71,3 +71,8 @@ button:not(:disabled):active { transform: translateY(1px); }
 @media(max-width:760px) { .hero { grid-template-columns: 1fr; padding: 64px 7% 48px; gap: 35px; min-height: auto; } .hero h1 { max-width: 430px; } .hero-visual { max-width: 540px; width: 100%; margin: auto; } .app-header { padding: 16px 7%; } .logo { font-size: 20px; } .account-email { max-width: 160px; } }
 @media(max-width:480px) { .auth-panel { padding: 28px 24px; } .hero-actions button { padding: 14px 19px; } .hero p { font-size: 15px; } }
 @media(prefers-reduced-motion:reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+.hero-actions .demo-link { display: inline-flex; align-items: center; padding: 15px 24px; border: 1px solid #303a34; border-radius: 13px; background: #303a34; color: #fff; font-size: 14px; text-decoration: none; transition: background 180ms, transform 180ms; }
+.hero-actions .demo-link:hover { background: #425649; }
+.hero-actions .demo-link:active { transform: translateY(1px); }
+.hero-actions .demo-link:focus-visible { outline: 3px solid #75bc91; outline-offset: 3px; }

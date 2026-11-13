@@ -1,36 +1,20 @@
 import { lazy, Suspense } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAudioPlayback } from '../../hooks/useAudioPlayback'
 import { TrackLibrary } from './TrackLibrary'
-import { AudioPlayer } from './AudioPlayer'
-import { WaveformView } from './WaveformView'
-import { GestureControls } from './GestureControls'
-import './Studio.css'
+import { StudioWorkspace } from './StudioWorkspace'
 
-const BenchmarkPanel = import.meta.env.DEV && new URLSearchParams(window.location.search).get('benchmark') === '1'
-  ? lazy(() => import('./BenchmarkPanel')) : null
+const BenchmarkPanel = import.meta.env.DEV ? lazy(() => import('./BenchmarkPanel')) : null
 
 export function Studio() {
+  const [searchParams] = useSearchParams()
   const playback = useAudioPlayback()
-  return (
-    <main className="studio-layout">
-      {BenchmarkPanel && <Suspense fallback={null}><BenchmarkPanel /></Suspense>}
-      <section className="track-panel" aria-labelledby="library-title">
-        <TrackLibrary selectedTrackId={playback.track?.id ?? null} isPlaying={playback.isPlaying}
-          isLoadingTrack={playback.isLoading} onSelectTrack={playback.select}
-          onDeleteStart={playback.beginDeletion} onTrackDeleted={playback.completeDeletion} />
-        <AudioPlayer playback={playback} />
-      </section>
-      <section className="waveform-panel" aria-labelledby="waveform-title">
-        <GestureControls volume={playback.volume} manualVolumeRevision={playback.manualVolumeRevision}
-          onVolumeChange={playback.setGestureVolume}
-          canTogglePlayback={Boolean(playback.track) && !playback.isLoading && !playback.isUnavailable}
-          isPlaying={playback.isPlaying}
-          onTogglePlayback={() => { if (playback.isPlaying) playback.pause(); else playback.play() }} />
-        <WaveformView
-          readFrequencyBands={playback.readFrequencyBands}
-          isPlaying={playback.isPlaying}
-        />
-      </section>
-    </main>
-  )
+  return <>
+    {BenchmarkPanel && searchParams.get('benchmark') === '1' && <Suspense fallback={null}><BenchmarkPanel /></Suspense>}
+    <StudioWorkspace playback={playback} library={
+    <TrackLibrary selectedTrackId={playback.track?.id ?? null} isPlaying={playback.isPlaying}
+      isLoadingTrack={playback.isLoading} onSelectTrack={playback.select}
+      onDeleteStart={playback.beginDeletion} onTrackDeleted={playback.completeDeletion} />
+  } />
+  </>
 }

@@ -111,7 +111,7 @@
 
 
 /* Keep row sizes stable and scroll only the library list. */
-.studio-layout .track-list { flex: 0 1 auto; min-height: 0; max-height: clamp(180px, 35svh, 360px); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; display: flex; flex-direction: column; gap: 4px; padding-right: 4px; }
+.studio-layout .track-list { flex: 0 0 auto; min-height: 0; max-height: min(224px, 32svh); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-gutter: stable; display: flex; flex-direction: column; gap: 4px; padding-right: 4px; }
 .studio-layout .track-row { flex-shrink: 0; min-height: 60px; }
 .track-list:focus-visible { outline: 2px solid #89a995; outline-offset: 4px; border-radius: 10px; }
 .player-seek, .player-volume input { touch-action: pan-y; }
@@ -199,3 +199,12 @@
 .gesture-error { overflow: auto; min-height: 0; }
 .gesture-error p { font-size: 10px; }
 @media (prefers-reduced-motion: reduce) { .gesture-guide-row { transition: none; } }
+
+.demo-notice { padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.demo-label { color: #365743; font-size: 12px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; }
+.demo-notice p, .demo-credit { color: var(--muted); font-size: 12px; line-height: 1.65; }
+.demo-notice a, .demo-credit a { color: #365743; text-underline-offset: 3px; }
+.demo-notice a { font-size: 12px; font-weight: 550; }
+.demo-notice a:hover, .demo-credit a:hover { color: #182c20; }
+.demo-credit { margin: 12px 0 0; }
+.demo-notice p { margin: 6px 0; }

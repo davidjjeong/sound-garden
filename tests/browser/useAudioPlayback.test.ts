@@ -315,3 +315,20 @@ it('distinguishes manual volume overrides from gesture volume updates', () => {
   expect(result.current.volume).toBe(.6)
   expect(result.current.manualVolumeRevision).toBe(2)
 })
+
+it('plays a demo blob URL without signing it and releases playback before local deletion', async () => {
+  const resolver = vi.fn(async () => ({ url: 'blob:demo-audio', expiresAt: Infinity }))
+  const { result } = renderHook(() => useAudioPlayback(resolver))
+  const local = { id: 'local', title: 'Local audio', size_bytes: 100 }
+  await act(async () => result.current.select(local))
+  expect(instances[0].src).toBe('blob:demo-audio')
+  expect(result.current.isPlaying).toBe(true)
+  expect(sign).not.toHaveBeenCalled()
+  act(() => result.current.pause())
+  await act(async () => result.current.play())
+  expect(resolver).toHaveBeenCalledTimes(1)
+  act(() => { result.current.beginDeletion(local.id); result.current.completeDeletion(local.id) })
+  expect(instances[0].src).toBe('')
+  expect(instances[0].paused).toBe(true)
+  expect(result.current.track).toBeNull()
+})

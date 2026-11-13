@@ -1,8 +1,8 @@
+import { TrackLibraryView } from './TrackLibraryView'
 import { useEffect, useRef, useState } from 'react'
-import type { ChangeEvent } from 'react'
 import { getTracks } from '../../lib/tracks'
 import { useTrackDeletion } from '../../hooks/useTrackDeletion'
-import { DeleteTrackDialog, TrashIcon } from './DeleteTrackDialog'
+import { DeleteTrackDialog } from './DeleteTrackDialog'
 import { useTrackUpload } from '../../hooks/useTrackUpload'
 
 import type { LibraryTrack } from '../../types/tracks'
@@ -20,13 +20,11 @@ export function TrackLibrary({ selectedTrackId, isPlaying, isLoadingTrack, onSel
   const deletion = useTrackDeletion()
   const removedIds = useRef(new Set<string>())
   const [deleteMessage, setDeleteMessage] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
   const [tracks, setTracks] = useState<LibraryTrack[]>([])
   const [loading, setLoading] = useState(true)
   const [libraryError, setLibraryError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
   const { status, error: uploadError, completedTrack, canRetry, isUploading, startUpload, retryUpload, reset } = useTrackUpload()
-  const [query, setQuery] = useState('')
 
   useEffect(() => {
     let active = true
@@ -54,15 +52,6 @@ export function TrackLibrary({ selectedTrackId, isPlaying, isLoadingTrack, onSel
     }
   }, [completedTrack, reloadKey])
 
-  async function handleUpload(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-
-    if (!file) return
-
-    await startUpload(file)
-  }
-
   async function handleDelete() {
     if (deletion.target) onDeleteStart?.(deletion.target.id)
     const id = await deletion.confirm()
@@ -83,10 +72,6 @@ export function TrackLibrary({ selectedTrackId, isPlaying, isLoadingTrack, onSel
     error: '',
   }[status]
 
-  const filteredTracks = tracks.filter((track) =>
-    track.title.toLowerCase().includes(query.trim().toLowerCase()),
-  )
-
   return (
     <>
       {deletion.isOpen && deletion.target && (
@@ -100,42 +85,6 @@ export function TrackLibrary({ selectedTrackId, isPlaying, isLoadingTrack, onSel
         </div>
       )}
       <p className="upload-status" role="status" aria-atomic="true">{deleteMessage}</p>
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".mp3,.wav"
-        onChange={handleUpload}
-        disabled={isUploading || loading}
-        hidden
-      />
-
-      <div className="library-toolbar">
-        <div>
-          <h1 id="library-title">My library</h1>
-          <p>
-            {tracks.length} {tracks.length === 1 ? 'track' : 'tracks'}
-          </p>
-        </div>
-
-        <button
-          className="upload-button"
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={isUploading || loading}
-        >
-          {isUploading ? 'Working…' : '+ Upload audio'}
-        </button>
-      </div>
-
-      <input
-        className="library-search"
-        type="search"
-        placeholder="Search your music"
-        aria-label="Search your music"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-      />
-
       {libraryError && (
         <div className="upload-feedback">
           <p role="alert">{libraryError}</p>
@@ -159,61 +108,11 @@ export function TrackLibrary({ selectedTrackId, isPlaying, isLoadingTrack, onSel
       )}
       <p className="upload-status" role="status" aria-atomic="true">{uploadMessage}</p>
 
-      {loading ? (
-        <p role="status">Loading your library…</p>
-      ) : tracks.length === 0 ? (
-        <div className="upload-zone">
-          <span className="empty-icon" aria-hidden="true">
-            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M13 23V9l13-3v14M13 13l13-3" />
-              <ellipse cx="9" cy="24" rx="4" ry="3" />
-              <ellipse cx="22" cy="21" rx="4" ry="3" />
-            </svg>
-          </span>
-          <h2>Add your first track</h2>
-          <p>Choose an MP3 or WAV file, up to 20 MiB.</p>
-
-          <button
-            className="upload-button"
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            disabled={isUploading || loading}
-          >
-            {isUploading ? 'Working…' : 'Choose files'}
-          </button>
-        </div>
-      ) : filteredTracks.length === 0 ? (
-        <p>No tracks match your search.</p>
-      ) : (
-        <ul className="track-list" aria-label="Tracks" tabIndex={0}>
-          {filteredTracks.map((track) => (
-            <li className={`track-row${selectedTrackId === track.id ? ' track-row-selected' : ''}`} key={track.id}>
-              <button type="button" className="track-select" aria-label={`Select ${track.title}`}
-                aria-pressed={selectedTrackId === track.id} disabled={deletion.target?.id === track.id}
-                onClick={() => onSelectTrack?.(track)}>
-                <span className="track-indicator" aria-hidden="true">
-                  {selectedTrackId === track.id && isLoadingTrack ? <span className="delete-spinner" />
-                    : <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d={selectedTrackId === track.id && isPlaying
-                        ? 'M7 5h4v14H7zM14 5h4v14h-4z'
-                        : 'M8 5.5 19 12 8 18.5V5.5Z'} />
-                    </svg>}
-                </span>
-                <span>{track.title}</span>
-              </button>
-              <div className="track-row-actions">
-                <span className="track-size">{(track.size_bytes / 1024 / 1024).toFixed(1)} MB</span>
-                <button className="track-delete" type="button" aria-label={`Delete ${track.title}`}
-                  title={`Delete ${track.title}`} disabled={deletion.target !== null}
-                  onClick={(event) => { event.stopPropagation(); setDeleteMessage(''); deletion.choose(track) }}>
-                  {deletion.isDeleting && deletion.target?.id === track.id
-                    ? <span className="delete-spinner" aria-hidden="true" /> : <TrashIcon />}
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      <TrackLibraryView tracks={tracks} loading={loading} isUploading={isUploading}
+        selectedTrackId={selectedTrackId} isPlaying={isPlaying} isLoadingTrack={isLoadingTrack}
+        deletingId={deletion.target?.id ?? null} isDeleting={deletion.isDeleting}
+        onSelectTrack={onSelectTrack} onUpload={startUpload}
+        onDelete={(track) => { setDeleteMessage(''); deletion.choose(track) }} />
     </>
   )
 }

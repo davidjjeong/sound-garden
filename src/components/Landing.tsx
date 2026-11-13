@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { AuthForm } from './AuthForm'
 import { WaveArtwork } from './WaveArtwork'
@@ -30,6 +31,7 @@ export function Landing() {
           </p>
 
           <div className="hero-actions">
+            <Link className="demo-link" to="/demo">Try demo</Link>
             <button
               type="button"
               onClick={() => setAuthMode('signup')}

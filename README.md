@@ -180,3 +180,13 @@ Further implementation details:
 ## Development performance measurements
 
 Use `/studio?benchmark=1` on the local Vite server for opt-in tracking latency and throughput measurement. See the [benchmark procedure](docs/benchmarks/README.md). The panel and collection code are excluded from production builds.
+
+## Guest demo
+
+Open [/demo](https://sound-garden-zeta.vercel.app/demo) or select **Try demo** on the landing page. No account is needed. Select the included sample to start playback, then optionally enable the camera for gesture controls.
+
+The demo is sample-only: upload, deletion, and search controls are hidden. Sign in to upload your own music and use the persistent personal library. The demo shares the studio player, visualizer, and gestures; it does not call Supabase library or storage endpoints. Camera frames continue to be processed locally.
+
+Sample: **“Cipher” by Kevin MacLeod (incompetech.com)**, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The bundled MP3 is unmodified; playback supports live volume changes. See [audio attribution](public/audio/ATTRIBUTION.md) for the official source and license. The audio license is separate from the application code.
+
+Demo tests cover public/protected routing, auth failures, sample playback without signed URLs, and the absence of upload, deletion, and search controls. Run `npm test`, `npm run lint`, and `npm run build`.

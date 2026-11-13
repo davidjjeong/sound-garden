@@ -1,3 +1,4 @@
+import { validateAudioFile } from '../lib/audioFiles'
 import { DuplicateTrackError } from '../lib/uploadErrors'
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -111,12 +112,7 @@ export function useTrackUpload() {
   async function startUpload(file: File): Promise<ReadyTrack | null> {
     if (busyRef.current || !mountedRef.current) return null
 
-    const extension = file.name.split('.').pop()?.toLowerCase()
-    if (
-      (extension !== 'mp3' && extension !== 'wav') ||
-      file.name.length > 255 ||
-      file.size <= 0 || file.size > 20 * 1024 * 1024
-    ) {
+    if (validateAudioFile(file)) {
       attemptRef.current = null
       setState({
         status: 'error',
